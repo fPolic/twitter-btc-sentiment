@@ -3,11 +3,19 @@ import re
 import csv
 import pprint
 
+from pymongo import MongoClient
 from textblob import TextBlob
 from string import punctuation
-from pymongo import MongoClient
+from nltk import bigrams
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+
+from textblob.sentiments import NaiveBayesAnalyzer
+from textblob.classifiers import NaiveBayesClassifier
+from textblob.classifiers import BaseClassifier
+
+with open('./data/nb-data.json', 'r') as fp:
+    __NaiveBayesClassifier = NaiveBayesClassifier(fp, format="json")
 
 DATABASE_NAME = 'fer'
 mongoURL = 'mongodb://localhost:27017/'
@@ -25,8 +33,8 @@ __stopwords = set(stopwords.words('english') + list(punctuation))
 
 
 def process_tweet(tweet):
-    # print(tweet)
-    # lowercase
+        # print(tweet)
+        # lowercase
     tweet = tweet.lower()
     # remove URLS
     tweet = re.sub('((www\.[^\s]+)|(https?://[^\s]+))',
@@ -38,34 +46,45 @@ def process_tweet(tweet):
     # replace consecutive non-ASCII characters with a space
     tweet = re.sub(r'[^\x00-\x7F]+', ' ', tweet)
     # remove repeated characters (helloooooooo into hello)
-    tweet = word_tokenize(tweet)
+    tokens = word_tokenize(tweet)
     # list of words without stop words
-    return [word for word in tweet if word not in __stopwords]
+    return [word for word in tokens if word not in __stopwords]
 
 # =============== STRATEGIES ===============
 
 
-def process_corpus_sentiment(tweets):
+def classify(tweets):
+    for tweet in tweets:
+        tokens = process_tweet(tweet.get('text') + ' ' +
+                               ' '.join(tweet.get('hashtags')))  # do we want to use `hastags` here
+
+        db.tweets.update_one(tweet, {"$set": {
+            "classification": __NaiveBayesClassifier.classify(' '.join(tokens))
+        }})
+
+
+def analyze_sentiment(tweets):
     for tweet in tweets:
         tokens = process_tweet(tweet.get('text') + ' ' +
                                ' '.join(tweet.get('hashtags')))  # do we want to use `hastags` here
         analysis = TextBlob(' '.join(tokens))
 
-        # skip objective sentences (facts, infos, etc.)
+        # skip objective sentences(facts, infos, etc.)
         if analysis.sentiment.subjectivity < 0.5:
             continue
 
         sentiment_polarity = analysis.sentiment.polarity
 
         db.tweets.update_one(tweet, {"$set": {
-            "tokenized": tokens,  # TODO: don't save this
+            # "tokenized": tokens,  # TODO: don't save this
             "sentiment": sentiment_polarity
         }})
 
 
 def main():
-    tweets = db.tweets.find().limit(300)
-    process_corpus_sentiment(tweets)
+    tweets = db.tweets.find().limit(100)
+    # analyze_sentiment(tweets)
+    classify(tweets)
 
 
 if __name__ == "__main__":

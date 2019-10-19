@@ -39,7 +39,7 @@ def main():
                         line.get('date'), '%Y-%m-%d %H:%M')
                 tweet = {
                     "date": parsed_date,
-                    "username": line.get('username'),
+                    # "username": line.get('username'),
                     "text": line.get('text'),
                     "hashtags": get_hastag_list(line.get('hashtags')),
                     # do we care about this?
