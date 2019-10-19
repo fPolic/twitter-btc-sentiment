@@ -1,4 +1,5 @@
 import os
+import re
 import csv
 import datetime
 
@@ -7,6 +8,12 @@ from pymongo import MongoClient
 DATABASE_NAME = 'fer'
 TWEETS_DIR = './data/tweets/'
 mongoURL = 'mongodb://localhost:27017/'
+
+# split string into list and remove `#`
+
+
+def get_hastag_list(hashtags):
+    return [re.sub(r'#([^\s]+)', r'\1', ht) for ht in hashtags.split(' ')]
 
 
 def main():
@@ -34,9 +41,14 @@ def main():
                     "date": parsed_date,
                     "username": line.get('username'),
                     "text": line.get('text'),
-                    "hashtags": line.get('hashtags'),
+                    "hashtags": get_hastag_list(line.get('hashtags')),
+                    # do we care about this?
+                    # we can eliminate duplicate tweets with Mongo index
+                    # 'retweet': int(line.get('retweets'))
                 }
 
+                # print(tweet)
+                # return
                 insert_data.append(tweet)
             db.tweets.insert_many(insert_data)
 
