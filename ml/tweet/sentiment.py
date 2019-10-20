@@ -2,21 +2,17 @@ import os
 import re
 import csv
 import pprint
+import pickle
 
+from textblob import TextBlob
 from string import punctuation
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-
-from textblob import TextBlob
-from textblob.sentiments import NaiveBayesAnalyzer
-from textblob.classifiers import NaiveBayesClassifier
-from textblob.classifiers import BaseClassifier
+from nltk.corpus import twitter_samples
 
 from ml.helpers.mongo import get_tweet_repo
 
-with open('./data/nb-data.json', 'r') as fp:
-    __NaiveBayesClassifier = NaiveBayesClassifier(fp, format="json")
-
+__NaiveBayesClassifier = pickle.load(open("naivebayes.pickle", "rb"))
 TweetRepo = get_tweet_repo()
 
 # =============== PROCESSING ===============
@@ -67,16 +63,16 @@ def process_tweets_sentiment(count=100):
     tweets = TweetRepo.find().limit(count)
 
     for tweet in tweets:
-        # do we want to use `hastags` here
+        # do we want to use `hashtags` here
         raw_text = tweet.get('text') + ' ' + ' '.join(tweet.get('hashtags'))
         tokens = tokenize_tweet(raw_text)
         text = ' '.join(tokens)
 
         TweetRepo.update_one(tweet, {"$set": {
-            "classification": classify_sentiment(text)
+            # "tokenized": tokens,  # TODO: don't save this
+            "sentiment": analyze_sentiment(text)
         }})
 
         TweetRepo.update_one(tweet, {"$set": {
-            # "tokenized": tokens,  # TODO: don't save this
-            "sentiment": analyze_sentiment(text)
+            "classification": classify_sentiment(text)
         }})
