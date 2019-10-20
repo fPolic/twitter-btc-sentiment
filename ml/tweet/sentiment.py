@@ -6,7 +6,6 @@ import pprint
 from pymongo import MongoClient
 from textblob import TextBlob
 from string import punctuation
-from nltk import bigrams
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
