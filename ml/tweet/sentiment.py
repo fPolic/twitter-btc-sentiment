@@ -64,7 +64,7 @@ def process_tweets_sentiment(count=100):
 
     for tweet in tweets:
         # do we want to use `hashtags` here
-        raw_text = tweet.get('text') + ' ' + ' '.join(tweet.get('hashtags'))
+        raw_text = tweet.get('text')  # + ' ' + ' '.join(tweet.get('hashtags'))
         tokens = tokenize_tweet(raw_text)
         text = ' '.join(tokens)
 

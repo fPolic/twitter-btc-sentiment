@@ -27,6 +27,7 @@ train_set = pos_tweets_set[1000:2000] + neg_tweets_set[1000:2000]
 
 __NaiveBayesClassifier = NaiveBayesClassifier(train_set)
 print("Accuracy: {}".format(__NaiveBayesClassifier.accuracy(test_set)))
+print(__NaiveBayesClassifier.show_informative_features(10))
 
 # save model for later use
 pickle.dump(__NaiveBayesClassifier, open("naivebayes.pickle", "wb"))
