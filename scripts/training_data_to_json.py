@@ -10,7 +10,7 @@ __stopwords = set(stopwords.words('english') + list(punctuation))
 
 
 def process_tweet(tweet):
-        # lowercase
+    # lowercase
     tweet = tweet.lower()
     # remove URLS
     tweet = re.sub('((www\.[^\s]+)|(https?://[^\s]+))',

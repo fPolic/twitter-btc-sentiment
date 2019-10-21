@@ -25,8 +25,7 @@ __stopwords = set(stopwords.words('english') + list(punctuation))
 
 
 def tokenize_tweet(tweet):
-        # print(tweet)
-        # lowercase
+    # lowercase
     tweet = tweet.lower()
     # remove URLS
     tweet = re.sub('((www\.[^\s]+)|(https?://[^\s]+))',
