@@ -58,20 +58,17 @@ def analyze_sentiment(text):
     return analysis.sentiment.polarity
 
 
-def process_tweets_sentiment(count=100):
+def process_tweets_sentiment(count=200):
     tweets = TweetRepo.find().limit(count)
 
     for tweet in tweets:
         # do we want to use `hashtags` here
-        raw_text = tweet.get('text')  # + ' ' + ' '.join(tweet.get('hashtags'))
+        raw_text = tweet.get('text') + ' ' + ' '.join(tweet.get('hashtags'))
         tokens = tokenize_tweet(raw_text)
         text = ' '.join(tokens)
 
         TweetRepo.update_one(tweet, {"$set": {
             # "tokenized": tokens,  # TODO: don't save this
-            "sentiment": analyze_sentiment(text)
-        }})
-
-        TweetRepo.update_one(tweet, {"$set": {
+            "sentiment": analyze_sentiment(text),
             "classification": classify_sentiment(text)
         }})

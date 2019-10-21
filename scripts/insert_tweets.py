@@ -13,6 +13,8 @@ mongoURL = 'mongodb://localhost:27017/'
 
 
 def get_hastag_list(hashtags):
+    if hashtags == None:
+        return []
     return [re.sub(r'#([^\s]+)', r'\1', ht) for ht in hashtags.split(' ')]
 
 
@@ -22,7 +24,7 @@ def main():
     db.tweets.drop()
 
     file_list = os.listdir(TWEETS_DIR)
-    for path in file_list[:3]:
+    for path in file_list[30:35]:
 
         file_path = os.path.join(TWEETS_DIR, path)
         with open(file_path, mode="r") as csv_file:
