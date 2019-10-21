@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+import motor.motor_asyncio
 
 # TODO: handle trough config file or env (Docker)
 DATABASE_NAME = 'fer'
@@ -13,11 +13,6 @@ DB = None
 def get_db_instance(db_name=DATABASE_NAME):
     global DB
     if DB is None:
-        client = MongoClient(mongoURL)
+        client = motor.motor_asyncio.AsyncIOMotorClient(mongoURL)
         DB = client[DATABASE_NAME]
     return DB
-
-
-# return mongo collection of tweets
-def get_tweet_repo():
-    return get_db_instance().tweets

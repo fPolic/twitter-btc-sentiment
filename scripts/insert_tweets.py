@@ -22,7 +22,7 @@ def main():
     db.tweets.drop()
 
     file_list = os.listdir(TWEETS_DIR)
-    for path in file_list[:3]:
+    for path in file_list[20:24]:
 
         file_path = os.path.join(TWEETS_DIR, path)
         with open(file_path, mode="r") as csv_file:

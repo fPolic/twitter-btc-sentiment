@@ -10,10 +10,10 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.corpus import twitter_samples
 
-from ml.helpers.mongo import get_tweet_repo
+from ml.helpers.mongo import get_db_instance
 
 __NaiveBayesClassifier = pickle.load(open("naivebayes.pickle", "rb"))
-TweetRepo = get_tweet_repo()
+TweetRepo = get_db_instance().tweets
 
 # =============== PROCESSING ===============
 
@@ -58,20 +58,17 @@ def analyze_sentiment(text):
     return analysis.sentiment.polarity
 
 
-def process_tweets_sentiment(count=100):
-    tweets = TweetRepo.find().limit(count)
-
+async def process_tweets_sentiment(count=100):
+    tweets = await TweetRepo.find().to_list(length=count)
     for tweet in tweets:
         # do we want to use `hashtags` here
-        raw_text = tweet.get('text')  # + ' ' + ' '.join(tweet.get('hashtags'))
+        # + ' ' + ' '.join(tweet.get('hashtags'))
+        raw_text = tweet.get('text')
         tokens = tokenize_tweet(raw_text)
         text = ' '.join(tokens)
 
-        TweetRepo.update_one(tweet, {"$set": {
+        await TweetRepo.update_one(tweet, {"$set": {
             # "tokenized": tokens,  # TODO: don't save this
-            "sentiment": analyze_sentiment(text)
-        }})
-
-        TweetRepo.update_one(tweet, {"$set": {
+            "sentiment": analyze_sentiment(text),
             "classification": classify_sentiment(text)
         }})

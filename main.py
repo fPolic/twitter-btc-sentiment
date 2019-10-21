@@ -1,4 +1,6 @@
+import asyncio
 from ml.tweet.sentiment import process_tweets_sentiment
 
 if __name__ == '__main__':
-    process_tweets_sentiment()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(process_tweets_sentiment())
