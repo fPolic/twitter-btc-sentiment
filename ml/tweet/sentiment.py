@@ -92,7 +92,7 @@ def process_tweets_emotions(count=200):
     """
       Claculate sentiment for first `count` tweets from colection.
     """
-    tweets = TweetRepo.find()  # .limit(count)
+    tweets = TweetRepo.find(no_cursor_timeout=True)  # .limit(count)
     lexicon = get_emo_nrc_lexicon()
     bar = Bar('Processing emotions', max=tweets.count())
 
@@ -128,3 +128,5 @@ def process_tweets_emotions(count=200):
         # print(vaderAnalyzer.polarity_scores(
         #     raw_text + ' ' + ' '.join(tweet.get('hashtags'))))
     bar.finish()
+    # since using `no_cursor_timeout`, this is REQUIRED
+    tweets.close()
