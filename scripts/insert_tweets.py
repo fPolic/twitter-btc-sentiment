@@ -3,6 +3,7 @@ import re
 import csv
 import datetime
 
+from progress.bar import Bar
 from pymongo import MongoClient
 
 DATABASE_NAME = 'fer'
@@ -23,10 +24,11 @@ def main():
     db = client[DATABASE_NAME]
     db.tweets.drop()
 
-    file_list = os.listdir(TWEETS_DIR)
-    for path in file_list[30:35]:
-
+    file_list = sorted(os.listdir(TWEETS_DIR))[30:36]
+    bar = Bar('Inserting tweets: ', max=len(file_list))
+    for path in file_list:
         file_path = os.path.join(TWEETS_DIR, path)
+
         with open(file_path, mode="r") as csv_file:
 
             insert_data = []
@@ -52,7 +54,9 @@ def main():
                 # print(tweet)
                 # return
                 insert_data.append(tweet)
+            bar.next()
             db.tweets.insert_many(insert_data)
+    bar.finish()
 
 
 if __name__ == "__main__":

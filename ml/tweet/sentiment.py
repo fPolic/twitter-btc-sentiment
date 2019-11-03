@@ -5,6 +5,7 @@ import pprint
 import pickle
 import pandas as pd
 
+from progress.bar import Bar
 from textblob import TextBlob
 from string import punctuation
 from nltk.corpus import stopwords
@@ -91,10 +92,11 @@ def process_tweets_emotions(count=200):
     """
       Claculate sentiment for first `count` tweets from colection.
     """
-    tweets = TweetRepo.find().limit(count)
+    tweets = TweetRepo.find()  # .limit(count)
     lexicon = get_emo_nrc_lexicon()
+    bar = Bar('Processing emotions', max=tweets.count())
 
-    emotions = [
+    EMOTIONS = [
         'anger',
         'anticipation',
         'disgust',
@@ -115,10 +117,14 @@ def process_tweets_emotions(count=200):
         # left join emotions on word/token
         token_emotions = pd.merge(tokens_df, lexicon,  on='word', how='left')
         # make only `emotions` projection
-        for em, acc in token_emotions[emotions].sum(axis=0, skipna=True).items():
+        emotions = token_emotions[EMOTIONS].sum(axis=0, skipna=True).items()
+        # build record data
+        for em, acc in emotions:
             insert_em[em] = int(acc)
 
         TweetRepo.update_one(tweet, {"$set": insert_em})
-        # print(vaderAnalyzer.polarity_scores(raw_text))
-        # print(vaderAnalyzer.polarity_scores(' '.join(tokens)))
-        # print('\n')
+        bar.next()
+        # use this sentiment socre to determine which tweets should be considered ???
+        # print(vaderAnalyzer.polarity_scores(
+        #     raw_text + ' ' + ' '.join(tweet.get('hashtags'))))
+    bar.finish()
