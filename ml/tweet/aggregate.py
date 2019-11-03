@@ -81,7 +81,7 @@ pipelineHourly = [
     }
 ]
 
-pipelineDaly = [
+pipelineDaily = [
     {
         '$sort': {
             'date': 1
@@ -161,7 +161,7 @@ pipelineDaly = [
 
 def create_emotions_aggregation_view(hourly=False):
     config = {'create': 'tweet_emotions_by_date',
-              'viewOn': 'tweets', 'pipeline': pipelineDaly}
+              'viewOn': 'tweets', 'pipeline': pipelineDaily}
     if hourly:
         config = {'create': 'tweet_emotions_by_date_hourly',
                   'viewOn': 'tweets', 'pipeline': pipelineHourly}
