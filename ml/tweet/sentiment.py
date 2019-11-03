@@ -94,7 +94,7 @@ def process_tweets_emotions(count=200):
     """
     tweets = TweetRepo.find(no_cursor_timeout=True)  # .limit(count)
     lexicon = get_emo_nrc_lexicon()
-    bar = Bar('Processing emotions', max=tweets.count())
+    bar = Bar('Processing emotions:', max=tweets.count())
 
     EMOTIONS = [
         'anger',
