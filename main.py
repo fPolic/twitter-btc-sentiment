@@ -1,4 +1,4 @@
-from ml.tweet.sentiment import process_tweets_sentiment
+from ml.tweet.sentiment import process_tweets_emotions
 
 if __name__ == '__main__':
-    process_tweets_sentiment()
+    process_tweets_emotions()

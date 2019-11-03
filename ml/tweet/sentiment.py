@@ -3,6 +3,7 @@ import re
 import csv
 import pprint
 import pickle
+import pandas as pd
 
 from textblob import TextBlob
 from string import punctuation
@@ -11,6 +12,10 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import twitter_samples
 
 from ml.helpers.mongo import get_tweet_repo
+from ml.helpers.lexicon import get_emo_nrc_lexicon
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
+vaderAnalyzer = SentimentIntensityAnalyzer()
 
 __NaiveBayesClassifier = pickle.load(open("naivebayes.pickle", "rb"))
 TweetRepo = get_tweet_repo()
@@ -45,12 +50,17 @@ def tokenize_tweet(tweet):
 
 
 def classify_sentiment(text):
+    """
+     Get tweet sentiment using pretrained NB classifier
+    """
     return __NaiveBayesClassifier.classify(text)
 
 
 def analyze_sentiment(text):
+    """
+      Get tweet sentiment using builtin analyser from TextBlob
+    """
     analysis = TextBlob(text)
-
     # skip objective sentences(facts, infos, etc.)
     if analysis.sentiment.subjectivity < 0.5:
         return None
@@ -59,16 +69,39 @@ def analyze_sentiment(text):
 
 
 def process_tweets_sentiment(count=200):
+    """
+      Claculate sentiment for first `count` tweets from colection.
+    """
     tweets = TweetRepo.find().limit(count)
 
     for tweet in tweets:
         # do we want to use `hashtags` here
-        raw_text = tweet.get('text') + ' ' + ' '.join(tweet.get('hashtags'))
+        raw_text = tweet.get('text')
+        # + ' ' + ' '.join(tweet.get('hashtags')) // SHOULD WE USE HASHTAGS?
         tokens = tokenize_tweet(raw_text)
         text = ' '.join(tokens)
 
         TweetRepo.update_one(tweet, {"$set": {
-            # "tokenized": tokens,  # TODO: don't save this
             "sentiment": analyze_sentiment(text),
             "classification": classify_sentiment(text)
         }})
+
+
+def process_tweets_emotions(count=200):
+    """
+      Claculate sentiment for first `count` tweets from colection.
+    """
+    tweets = TweetRepo.find().skip(4).limit(count)
+    lexicon = get_emo_nrc_lexicon()
+
+    for tweet in tweets:
+        raw_text = tweet.get('text')
+        tokens = tokenize_tweet(raw_text)
+        # print(tokens)
+        tokens_df = pd.DataFrame({'word': tokens})
+        token_emotions = pd.merge(tokens_df, lexicon,  on='word', how='left')
+        print(token_emotions)
+
+        # print(vaderAnalyzer.polarity_scores(raw_text))
+        # print(vaderAnalyzer.polarity_scores(' '.join(tokens)))
+        # print('\n')
