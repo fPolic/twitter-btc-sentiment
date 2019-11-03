@@ -91,17 +91,34 @@ def process_tweets_emotions(count=200):
     """
       Claculate sentiment for first `count` tweets from colection.
     """
-    tweets = TweetRepo.find().skip(4).limit(count)
+    tweets = TweetRepo.find().limit(count)
     lexicon = get_emo_nrc_lexicon()
 
+    emotions = [
+        'anger',
+        'anticipation',
+        'disgust',
+        'fear',
+        'joy',
+        'negative',
+        'positive',
+        'sadness',
+        'surprise',
+        'trust'
+    ]
+
     for tweet in tweets:
+        insert_em = {}
         raw_text = tweet.get('text')
         tokens = tokenize_tweet(raw_text)
-        # print(tokens)
         tokens_df = pd.DataFrame({'word': tokens})
+        # left join emotions on word/token
         token_emotions = pd.merge(tokens_df, lexicon,  on='word', how='left')
-        print(token_emotions)
+        # make only `emotions` projection
+        for em, acc in token_emotions[emotions].sum(axis=0, skipna=True).items():
+            insert_em[em] = int(acc)
 
+        TweetRepo.update_one(tweet, {"$set": insert_em})
         # print(vaderAnalyzer.polarity_scores(raw_text))
         # print(vaderAnalyzer.polarity_scores(' '.join(tokens)))
         # print('\n')
