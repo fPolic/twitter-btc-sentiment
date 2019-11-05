@@ -5,6 +5,7 @@ import datetime
 
 from progress.bar import Bar
 from pymongo import MongoClient
+from ml.tweet.sentiment import tokenize_tweet
 
 DATABASE_NAME = 'fer'
 TWEETS_DIR = './data/tweets/'
@@ -45,6 +46,7 @@ def main():
                     "date": parsed_date,
                     # "username": line.get('username'),
                     "text": line.get('text'),
+                    "tokens":  tokenize_tweet(line.get('text')),
                     "hashtags": get_hastag_list(line.get('hashtags')),
                     # do we care about this?
                     # we can eliminate duplicate tweets with Mongo index

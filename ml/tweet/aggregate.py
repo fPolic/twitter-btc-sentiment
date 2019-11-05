@@ -9,6 +9,13 @@ pipelineHourly = [
             'date': 1
         }
     }, {
+        '$lookup': {
+            'from': 'lexicon',
+            'localField': 'tokens',
+            'foreignField': 'word',
+            'as': 'emotions'
+        }
+    }, {
         '$project': {
             '_id': 0,
             'date': {
@@ -17,49 +24,58 @@ pipelineHourly = [
                     'format': '%Y-%m-%dT%HH'
                 }
             },
-            'anger': 1,
-            'anticipation': 1,
-            'disgust': 1,
-            'fear': 1,
-            'joy': 1,
-            'negative': 1,
-            'positive': 1,
-            'sadness': 1,
-            'surprise': 1,
-            'trust': 1
+            'text': 1,
+            'emotions': {
+                'word': 1,
+                'anger': 1,
+                'anticipation': 1,
+                'disgust': 1,
+                'fear': 1,
+                'joy': 1,
+                'negative': 1,
+                'positive': 1,
+                'sadness': 1,
+                'surprise': 1,
+                'trust': 1
+            }
+        }
+    }, {
+        '$unwind': {
+            'path': '$emotions',
+            'preserveNullAndEmptyArrays': False
         }
     }, {
         '$group': {
             '_id': '$date',
             'anger': {
-                '$sum': '$anger'
+                '$sum': '$emotions.anger'
             },
             'anticipation': {
-                '$sum': '$anticipation'
+                '$sum': '$emotions.anticipation'
             },
             'disgust': {
-                '$sum': '$disgust'
+                '$sum': '$emotions.disgust'
             },
             'fear': {
-                '$sum': '$fear'
+                '$sum': '$emotions.fear'
             },
             'joy': {
-                '$sum': '$joy'
+                '$sum': '$emotions.joy'
             },
             'negative': {
-                '$sum': '$negative'
+                '$sum': '$emotions.negative'
             },
             'positive': {
-                '$sum': '$positive'
+                '$sum': '$emotions.positive'
             },
             'sadness': {
-                '$sum': '$sadness'
+                '$sum': '$emotions.sadness'
             },
             'surprise': {
-                '$sum': '$surprise'
+                '$sum': '$emotions.surprise'
             },
             'trust': {
-                '$sum': '$trust'
+                '$sum': '$emotions.trust'
             },
             'count': {
                 '$sum': 1
@@ -78,13 +94,18 @@ pipelineHourly = [
         '$sort': {
             'date': 1
         }
+    }, {
+        '$out': 'emotions_hourly'
     }
 ]
 
 pipelineDaily = [
     {
-        '$sort': {
-            'date': 1
+        '$lookup': {
+            'from': 'lexicon',
+            'localField': 'tokens',
+            'foreignField': 'word',
+            'as': 'emotions'
         }
     }, {
         '$project': {
@@ -92,52 +113,60 @@ pipelineDaily = [
             'date': {
                 '$dateToString': {
                     'date': '$date',
-                    'format': '%Y-%m-%d'
+                    'format': '%Y-%m-%dT%HH'
                 }
             },
-            'anger': 1,
-            'anticipation': 1,
-            'disgust': 1,
-            'fear': 1,
-            'joy': 1,
-            'negative': 1,
-            'positive': 1,
-            'sadness': 1,
-            'surprise': 1,
-            'trust': 1
+            'emotions': {
+                'word': 1,
+                'anger': 1,
+                'anticipation': 1,
+                'disgust': 1,
+                'fear': 1,
+                'joy': 1,
+                'negative': 1,
+                'positive': 1,
+                'sadness': 1,
+                'surprise': 1,
+                'trust': 1
+            }
+        }
+    }, {
+        '$unwind': {
+            'path': '$emotions',
+            'preserveNullAndEmptyArrays': False
         }
     }, {
         '$group': {
             '_id': '$date',
             'anger': {
-                '$sum': '$anger'
+                '$sum': '$emotions.anger'
             },
             'anticipation': {
-                '$sum': '$anticipation'
+                '$sum': '$emotions.anticipation'
             },
             'disgust': {
-                '$sum': '$disgust'
+                '$sum': '$emotions.disgust'
             },
             'fear': {
-                '$sum': '$fear'
+                '$sum': '$emotions.fear'
             },
             'joy': {
-                '$sum': '$joy'
+                '$sum': '$emotions.joy'
             },
             'negative': {
-                '$sum': '$negative'
+                '$sum': '$emotions.negative'
             },
             'positive': {
-                '$sum': '$positive'
+                '$sum': '$emotions.positive'
             },
             'sadness': {
-                '$sum': '$sadness'
+                '$sum': '$emotions.sadness'
             },
             'surprise': {
-                '$sum': '$surprise'
+                '$sum': '$emotions.surprise'
             },
             'trust': {
-                '$sum': '$trust'
+                '$sum': '$emotions.trust'
             },
             'count': {
                 '$sum': 1
@@ -147,26 +176,33 @@ pipelineDaily = [
         '$addFields': {
             'date': {
                 '$dateFromString': {
-                    'dateString': '$_id'
+                    'dateString': '$_id',
+                    'format': '%Y-%m-%dT%HH'
                 }
             }
         }
-    }, {
+    },  {
         '$sort': {
             'date': 1
-        }
+        },
+
+    },  {
+        '$out': 'emotions_daily'
     }
 ]
 
 
 def create_emotions_aggregation_view(hourly=False):
-    config = {'create': 'tweet_emotions_by_date',
-              'viewOn': 'tweets', 'pipeline': pipelineDaily}
+    # config = {'create': 'tweet_emotions_by_date',
+    #           'viewOn': 'tweets', 'pipeline': pipelineDaily}
     if hourly:
-        config = {'create': 'tweet_emotions_by_date_hourly',
-                  'viewOn': 'tweets', 'pipeline': pipelineHourly}
+        # config = {'create': 'tweet_emotions_by_date_hourly',
+        #           'viewOn': 'tweets', 'pipeline': pipelineHourly}
+        TweetRepo.aggregate(pipelineHourly)
+    else:
+        TweetRepo.aggregate(pipelineDaily)
 
-    get_db_instance().command(config)
+    # get_db_instance().command(config)
 
 
 def aggregate_tweet_emotions_by_date():
