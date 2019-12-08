@@ -1,0 +1,2 @@
+# backup mogno data from docker conatiner
+docker exec -it c049e10aba9d31daa48dde734d0a614eec9f3153ee0c5908b8154fc7f711b859 sh -c 'mongodump --archive --db=fer --collection=emotions_aggregation ' > data/emotions.dump
