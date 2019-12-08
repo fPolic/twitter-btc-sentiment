@@ -11,10 +11,11 @@ DATABASE_NAME = 'fer'
 TWEETS_DIR = './data/tweets/'
 mongoURL = 'mongodb://localhost:27017/'
 
-# split string into list and remove `#`
-
 
 def get_hastag_list(hashtags):
+    '''
+      split string into list and remove `#`
+    '''
     if hashtags == None:
         return []
     return [re.sub(r'#([^\s]+)', r'\1', ht) for ht in hashtags.split(' ')]
@@ -25,8 +26,10 @@ def main():
     db = client[DATABASE_NAME]
     db.tweets.drop()
 
-    file_list = sorted(os.listdir(TWEETS_DIR))[30:36]
+    file_list = sorted(os.listdir(TWEETS_DIR))
     bar = Bar('Inserting tweets: ', max=len(file_list))
+
+    time_limit = datetime.datetime(2018, 1, 23, 19, 00)
     for path in file_list:
         file_path = os.path.join(TWEETS_DIR, path)
 
@@ -42,6 +45,10 @@ def main():
                 except:
                     parsed_date = datetime.datetime.strptime(
                         line.get('date'), '%Y-%m-%d %H:%M')
+
+                if parsed_date < time_limit:
+                    continue
+
                 tweet = {
                     "date": parsed_date,
                     # "username": line.get('username'),
@@ -53,11 +60,10 @@ def main():
                     # 'retweet': int(line.get('retweets'))
                 }
 
-                # print(tweet)
-                # return
                 insert_data.append(tweet)
             bar.next()
-            db.tweets.insert_many(insert_data)
+            if len(insert_data) > 0:
+                db.tweets.insert_many(insert_data)
     bar.finish()
 
 
