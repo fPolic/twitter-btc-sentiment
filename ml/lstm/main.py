@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from numpy import array
 from pymongo import MongoClient
 
-from model import bidirectional
+from model import train
 
 
 DATABASE_NAME = 'fer'
@@ -109,7 +109,7 @@ def main(plot=None, train=None, window=WINDOW_SIZE):
     if train is not None:
 
         test_data = dev.merge(btc, on="date", how="inner")
-        model = bidirectional(test_data)
+        model = train(test_data)
 
 
 if __name__ == "__main__":

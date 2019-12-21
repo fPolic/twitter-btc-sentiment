@@ -1,4 +1,7 @@
 import datetime
+import operator
+import functools
+
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
@@ -7,8 +10,6 @@ from numpy import add, arange, array, column_stack
 from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.layers import Flatten, LSTM, Activation, Dropout, Dense, Bidirectional
-import functools
-import operator
 
 # This 3 params define input shape dimension
 WINDOW_SIZE = 23
@@ -40,7 +41,41 @@ def getDataInShape(data):
     return tf.convert_to_tensor(X, dtype=tf.float32), tf.convert_to_tensor(Y, dtype=tf.float32)
 
 
-def bidirectional(data):
+def bidirectional():
+    return Sequential([
+        Bidirectional(LSTM(WINDOW_SIZE, activation='relu',
+                           return_sequences=True), input_shape=(WINDOW_SIZE, EMOTIONS_DIMENSIONS)),
+        Dropout(0.3),
+        Bidirectional(LSTM(WINDOW_SIZE, activation='relu')),
+        Dense(1)
+    ])
+
+
+def stacked():
+    return Sequential([
+        LSTM(200, activation='relu',
+             input_shape=(WINDOW_SIZE, 2)),
+        LSTM(100, activation='relu', return_sequences=True),
+        LSTM(50, activation='relu', return_sequences=True),
+        LSTM(25, activation='relu'),
+        Dense(20, activation='relu'),
+        Dropout(0.2),
+        Dense(10, activation='relu'),
+        Dense(1),
+    ])
+
+
+def plotLoss(history):
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model train vs validation loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper right')
+    plt.show()
+
+
+def train(data, lstm_type='bidirectional', plot_loss=True):
 
     X, Y = getDataInShape(data)
 
@@ -54,37 +89,13 @@ def bidirectional(data):
     tensorboard_callback = TensorBoard(
         log_dir=log_dir, histogram_freq=1)
 
-    model = Sequential([
-        Bidirectional(LSTM(WINDOW_SIZE, activation='relu',
-                           return_sequences=True), input_shape=(WINDOW_SIZE, EMOTIONS_DIMENSIONS)),
-        Dropout(0.3),
-        Bidirectional(LSTM(WINDOW_SIZE, activation='relu')),
-        Dense(1)
-    ])
-
-    # model = Sequential()
-    # model.add(LSTM(200, activation='relu',
-    #                return_sequences=True, input_shape=(WINDOW_SIZE, 2)))
-    # model.add(LSTM(100, activation='relu', return_sequences=True))
-    # model.add(LSTM(50, activation='relu', return_sequences=True))
-    # model.add(LSTM(25, activation='relu'))
-    # model.add(Dense(20, activation='relu'))
-    # model.add(Dropout(0.2))
-    # model.add(Dense(10, activation='relu'))
-    # model.add(Dense(1))
-
-    model.compile(optimizer='adam', loss='mse', metrics=[
-                  'mean_squared_error'])
+    model = stacked() if lstm_type == 'stacked' else bidirectional()
+    model.compile(optimizer='adam', loss='mse', metrics=['mean_squared_error'])
     history = model.fit(X, Y, epochs=250, validation_split=0.2,
                         batch_size=WINDOW_SIZE * 14, callbacks=[tensorboard_callback])
 
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('model train vs validation loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper right')
-    plt.show()
+    if (plot_loss):
+        plotLoss(history)
 
-    print(model.predict(X_TEST, verbose=True) * 100, Y_TEST * 100)
+    print(model.predict(X_TEST, verbose=True), Y_TEST)
     return model
