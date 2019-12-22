@@ -14,7 +14,7 @@ from tensorflow.keras.layers import Flatten, LSTM, Activation, Dropout, Dense, B
 # This 3 params define input shape dimension
 WINDOW_SIZE = 23
 EMOTIONS_DIMENSIONS = 4
-NUMBER_OF_DAYS = WINDOW_SIZE * 5
+NUMBER_OF_DAYS = WINDOW_SIZE * 7
 
 
 def getDataInShape(data):
@@ -49,7 +49,7 @@ def bidirectional():
                            return_sequences=True), input_shape=(WINDOW_SIZE, EMOTIONS_DIMENSIONS)),
         # Dropout(0.3),
         Bidirectional(LSTM(4, activation='relu')),
-        # Dropout(0.2),
+        Dropout(0.2),
         Dense(1)
     ])
 
