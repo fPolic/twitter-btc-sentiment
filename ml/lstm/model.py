@@ -13,28 +13,30 @@ from tensorflow.keras.layers import Flatten, LSTM, Activation, Dropout, Dense, B
 
 # This 3 params define input shape dimension
 WINDOW_SIZE = 23
-EMOTIONS_DIMENSIONS = 2
-NUMBER_OF_DAYS = 14
+EMOTIONS_DIMENSIONS = 4
+NUMBER_OF_DAYS = WINDOW_SIZE * 7
 
 
 def getDataInShape(data):
 
-    fear = data['fear'].head(NUMBER_OF_DAYS * WINDOW_SIZE).values
-    count = data['count'].head(NUMBER_OF_DAYS * WINDOW_SIZE).values
+    positive = data['positive'].head(NUMBER_OF_DAYS * WINDOW_SIZE).values
+    negative = data['negative'].head(NUMBER_OF_DAYS * WINDOW_SIZE).values
+    trust = data['trust'].head(NUMBER_OF_DAYS * WINDOW_SIZE).values
+    anticipation = data['anticipation'].head(
+        NUMBER_OF_DAYS * WINDOW_SIZE).values
 
     btc_return = data['return'].head(
-        NUMBER_OF_DAYS * WINDOW_SIZE + WINDOW_SIZE + 1).values[WINDOW_SIZE:]
-    # _btc_return = ((btc_return - btc_return.min()) / (btc_return.max() -
-    #                                                   btc_return.min())).values
+        NUMBER_OF_DAYS * WINDOW_SIZE + WINDOW_SIZE).values[WINDOW_SIZE:]
 
     X = []
     Y = []
-    cols = array(column_stack((fear, count)))
+    cols = array(column_stack((positive, negative, trust, anticipation)))
     for i in range(0, cols.shape[0] - WINDOW_SIZE):
         X.append(cols[i:i + WINDOW_SIZE])
-        Y.append(btc_return[i + WINDOW_SIZE])
+        Y.append(functools.reduce(operator.add,
+                                  btc_return[i: i + WINDOW_SIZE]))
 
-    # X = array(column_stack((fear, count))).reshape(
+    # X = array(column_stack((positive, negative, trust, anticipation))).reshape(
     #     NUMBER_OF_DAYS, WINDOW_SIZE, EMOTIONS_DIMENSIONS)
     # Y = add.reduceat(btc_return, arange(0, btc_return.size, WINDOW_SIZE))
 
@@ -43,10 +45,11 @@ def getDataInShape(data):
 
 def bidirectional():
     return Sequential([
-        Bidirectional(LSTM(WINDOW_SIZE, activation='relu',
+        Bidirectional(LSTM(4, activation='relu',
                            return_sequences=True), input_shape=(WINDOW_SIZE, EMOTIONS_DIMENSIONS)),
         Dropout(0.3),
-        Bidirectional(LSTM(WINDOW_SIZE, activation='relu')),
+        Bidirectional(LSTM(4, activation='relu')),
+        Dropout(0.2),
         Dense(1)
     ])
 
@@ -54,7 +57,7 @@ def bidirectional():
 def stacked():
     return Sequential([
         LSTM(200, activation='relu',
-             input_shape=(WINDOW_SIZE, 2)),
+             input_shape=(WINDOW_SIZE, EMOTIONS_DIMENSIONS)),
         LSTM(100, activation='relu', return_sequences=True),
         LSTM(50, activation='relu', return_sequences=True),
         LSTM(25, activation='relu'),
@@ -91,8 +94,9 @@ def train(data, lstm_type='bidirectional', plot_loss=True):
 
     model = stacked() if lstm_type == 'stacked' else bidirectional()
     model.compile(optimizer='adam', loss='mse', metrics=['mean_squared_error'])
+
     history = model.fit(X, Y, epochs=250, validation_split=0.2,
-                        batch_size=WINDOW_SIZE * 14, callbacks=[tensorboard_callback])
+                        batch_size=WINDOW_SIZE * 7, callbacks=[tensorboard_callback])
 
     if (plot_loss):
         plotLoss(history)

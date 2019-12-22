@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from numpy import array
 from pymongo import MongoClient
 
-from model import train
+from model import train as trainModel
 
 
 DATABASE_NAME = 'fer'
@@ -108,8 +108,12 @@ def main(plot=None, train=None, window=WINDOW_SIZE):
 
     if train is not None:
 
-        test_data = dev.merge(btc, on="date", how="inner")
-        model = train(test_data)
+        test_data = dev.merge(btc, on="date", how="inner")[
+            ['close', 'return', 'positive', 'negative', 'trust', 'anticipation', 'date']]
+        # test_data.plot(
+        #     x="date", subplots=True, figsize=(14, 8), fontsize=12)
+        # plt.show()
+        model = trainModel(test_data)
 
 
 if __name__ == "__main__":
