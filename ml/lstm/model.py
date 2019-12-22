@@ -14,7 +14,7 @@ from tensorflow.keras.layers import Flatten, LSTM, Activation, Dropout, Dense, B
 # This 3 params define input shape dimension
 WINDOW_SIZE = 23
 EMOTIONS_DIMENSIONS = 4
-NUMBER_OF_DAYS = WINDOW_SIZE * 7
+NUMBER_OF_DAYS = WINDOW_SIZE * 5
 
 
 def getDataInShape(data):
@@ -47,9 +47,9 @@ def bidirectional():
     return Sequential([
         Bidirectional(LSTM(4, activation='relu',
                            return_sequences=True), input_shape=(WINDOW_SIZE, EMOTIONS_DIMENSIONS)),
-        Dropout(0.3),
+        # Dropout(0.3),
         Bidirectional(LSTM(4, activation='relu')),
-        Dropout(0.2),
+        # Dropout(0.2),
         Dense(1)
     ])
 
@@ -68,10 +68,11 @@ def stacked():
     ])
 
 
-def plotLoss(history):
+def plotLoss(history, predict, real):
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
-    plt.title('model train vs validation loss')
+    plt.title(
+        'model train vs validation loss, [PREDICTED]: ' + tf.strings.as_string(predict) + ' [REAL]: ' + tf.strings.as_string(real))
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper right')
@@ -95,11 +96,10 @@ def train(data, lstm_type='bidirectional', plot_loss=True):
     model = stacked() if lstm_type == 'stacked' else bidirectional()
     model.compile(optimizer='adam', loss='mse', metrics=['mean_squared_error'])
 
-    history = model.fit(X, Y, epochs=250, validation_split=0.2,
+    history = model.fit(X, Y, epochs=100, validation_split=0.2,
                         batch_size=WINDOW_SIZE * 7, callbacks=[tensorboard_callback])
 
     if (plot_loss):
-        plotLoss(history)
+        plotLoss(history, model.predict(X_TEST, verbose=True), Y_TEST)
 
-    print(model.predict(X_TEST, verbose=True), Y_TEST)
     return model
