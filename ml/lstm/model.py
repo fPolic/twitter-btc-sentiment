@@ -5,7 +5,7 @@ import functools
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-from numpy import add, arange, array, column_stack
+from numpy import add, arange, array, column_stack, float32
 
 from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.models import Model, Sequential
@@ -13,8 +13,8 @@ from tensorflow.keras.layers import Flatten, LSTM, Activation, Dropout, Dense, B
 
 # This 3 params define input shape dimension
 WINDOW_SIZE = 23
-EMOTIONS_DIMENSIONS = 4
-NUMBER_OF_DAYS = WINDOW_SIZE * 7
+EMOTIONS_DIMENSIONS = 4 + 1
+NUMBER_OF_DAYS = WINDOW_SIZE * 30
 
 
 def getDataInShape(data):
@@ -25,12 +25,16 @@ def getDataInShape(data):
     anticipation = data['anticipation'].head(
         NUMBER_OF_DAYS * WINDOW_SIZE).values
 
+    btc_close = data['close'].head(
+        NUMBER_OF_DAYS * WINDOW_SIZE).values
+
     btc_return = data['return'].head(
         NUMBER_OF_DAYS * WINDOW_SIZE + WINDOW_SIZE).values[WINDOW_SIZE:]
 
     X = []
     Y = []
-    cols = array(column_stack((positive, negative, trust, anticipation)))
+    cols = array(column_stack(
+        (positive, negative, trust, anticipation, btc_close)))
     for i in range(0, cols.shape[0] - WINDOW_SIZE):
         X.append(cols[i:i + WINDOW_SIZE])
         Y.append(functools.reduce(operator.add,
@@ -45,10 +49,10 @@ def getDataInShape(data):
 
 def bidirectional():
     return Sequential([
-        Bidirectional(LSTM(4, activation='relu',
+        Bidirectional(LSTM(EMOTIONS_DIMENSIONS, activation='relu',
                            return_sequences=True), input_shape=(WINDOW_SIZE, EMOTIONS_DIMENSIONS)),
         # Dropout(0.3),
-        Bidirectional(LSTM(4, activation='relu')),
+        Bidirectional(LSTM(EMOTIONS_DIMENSIONS, activation='relu')),
         Dropout(0.2),
         Dense(1)
     ])
@@ -68,11 +72,11 @@ def stacked():
     ])
 
 
-def plotLoss(history, predict, real):
+def plotLoss(history):
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
-    plt.title(
-        'model train vs validation loss, [PREDICTED]: ' + tf.strings.as_string(predict) + ' [REAL]: ' + tf.strings.as_string(real))
+    # plt.title(
+    #     'model train vs validation loss, [PREDICTED]: ' + tf.strings.as_string(predict) + ' [REAL]: ' + tf.strings.as_string(real))
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper right')
@@ -83,11 +87,11 @@ def train(data, lstm_type='bidirectional', plot_loss=True):
 
     X, Y = getDataInShape(data)
 
-    X_TEST = tf.reshape(X[-1], (1, WINDOW_SIZE, EMOTIONS_DIMENSIONS))
-    Y_TEST = Y[-1]
+    X_TEST = X[-10:]
+    Y_TEST = Y[-10:]
 
-    X = X[:-1]
-    Y = Y[:-1]
+    X = X[:-10]
+    Y = Y[:-10]
 
     log_dir = "./logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = TensorBoard(
@@ -100,6 +104,12 @@ def train(data, lstm_type='bidirectional', plot_loss=True):
                         batch_size=WINDOW_SIZE * 7, callbacks=[tensorboard_callback])
 
     if (plot_loss):
-        plotLoss(history, model.predict(X_TEST, verbose=True), Y_TEST)
+        plotLoss(history)
+
+    for i in range(0, len(X_TEST)):
+        x = model.predict(tf.reshape(
+            X_TEST[i], (1, WINDOW_SIZE, EMOTIONS_DIMENSIONS)), verbose=True)
+        y = Y_TEST[i]
+        print(x, y)
 
     return model

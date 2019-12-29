@@ -8,6 +8,7 @@ from numpy import array
 from pymongo import MongoClient
 
 from model import train as trainModel
+from _xgboost import trainModel as trainXGBoost
 
 
 DATABASE_NAME = 'fer'
@@ -49,7 +50,7 @@ def calculateZScore(dev, df, column):
 
 
 def calculateShareOfEmotion(share, df, column):
-    share[column] = (df[column]/df['count']).rolling(WINDOW_SIZE).mean()
+    share[column] = (df[column]/df['count'])  # .rolling(WINDOW_SIZE).mean()
 
 # =================== PLOTING TIME SERIES ===================
 
@@ -88,7 +89,11 @@ def main(plot=None, train=None, window=WINDOW_SIZE):
     WINDOW_SIZE = window  # optional param overrides default
 
     btc = getBTCDataFrame()
+    btc.set_index('date')
+
     emotions = getEmotionsDataFrame()
+    emotions.set_index('date')
+
     dev = emotions[['date']]
     share = emotions[['date']]
 
@@ -102,18 +107,19 @@ def main(plot=None, train=None, window=WINDOW_SIZE):
 
     dev.dropna(axis="rows", inplace=True)
     share.dropna(axis="rows", inplace=True)
+    # btc.fillna(method='ffill', inplace=True)
 
     if plot is not None:
         render(share, dev, btc, plot)
 
     if train is not None:
 
-        test_data = dev.merge(btc, on="date", how="inner")[
+        test_data = share.merge(btc, on="date", how="inner")[
             ['close', 'return', 'positive', 'negative', 'trust', 'anticipation', 'date']]
         # test_data.plot(
         #     x="date", subplots=True, figsize=(14, 8), fontsize=12)
         # plt.show()
-        model = trainModel(test_data)
+        model = (trainXGBoost if train == 'xgboost' else trainModel)(test_data)
 
 
 if __name__ == "__main__":
