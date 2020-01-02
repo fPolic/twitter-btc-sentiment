@@ -11,6 +11,8 @@ from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.layers import Flatten, LSTM, Activation, Dropout, Dense, Bidirectional
 
+from utils.dataset_split import split_dataframe
+
 # This 3 params define input shape dimension
 WINDOW_SIZE = 24
 EMOTIONS_DIMENSIONS = 4 + 1
@@ -18,6 +20,9 @@ NUMBER_OF_DAYS = WINDOW_SIZE * 30
 
 
 def getDataInShape(data):
+    X_train, y_train, X_test, y_test = split_dataframe(data)
+
+    X_train.head(NUMBER_OF_DAYS * WINDOW_SIZE)
 
     positive = data['positive'].head(NUMBER_OF_DAYS * WINDOW_SIZE).values
     negative = data['negative'].head(NUMBER_OF_DAYS * WINDOW_SIZE).values
@@ -39,10 +44,6 @@ def getDataInShape(data):
         X.append(cols[i:i + WINDOW_SIZE])
         Y.append(functools.reduce(operator.add,
                                   btc_return[i: i + WINDOW_SIZE]))
-
-    # X = array(column_stack((positive, negative, trust, anticipation))).reshape(
-    #     NUMBER_OF_DAYS, WINDOW_SIZE, EMOTIONS_DIMENSIONS)
-    # Y = add.reduceat(btc_return, arange(0, btc_return.size, WINDOW_SIZE))
 
     return tf.convert_to_tensor(X, dtype=tf.float32), tf.convert_to_tensor(Y, dtype=tf.float32)
 
@@ -85,13 +86,7 @@ def plotLoss(history):
 
 def train(data, lstm_type='bidirectional', plot_loss=True):
 
-    X, Y = getDataInShape(data)
-
-    X_TEST = X[-10:]
-    Y_TEST = Y[-10:]
-
-    X = X[:-10]
-    Y = Y[:-10]
+    X, Y, X_TEST, Y_TEST = getDataInShape(data)
 
     log_dir = "./logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = TensorBoard(

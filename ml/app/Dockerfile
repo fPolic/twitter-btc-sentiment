@@ -1,10 +1,14 @@
-FROM tensorflow/tensorflow:latest-py3
+FROM python:3.7.2
 
-WORKDIR /home/lstm
+WORKDIR /home/btc-tweets
 
-ADD ./* ./
+ADD ./ ./
 
-EXPOSE 8080
-# RUN pip install pandas
+RUN pip install xgboost    
+RUN pip install plotly
+RUN pip install matplotlib
+RUN pip install numpy
+RUN pip install tensorflow
 
+ENTRYPOINT [ "start.sh" ]
 CMD [ "/bin/sh" ]
