@@ -1,1 +1,0 @@
-docker run -it -v $PWD:/tmp -w /tmp tensorflow/tensorflow:latest-py3 bash
