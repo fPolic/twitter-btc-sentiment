@@ -4,12 +4,12 @@ import pandas as pd
 
 from numpy import array
 from pymongo import MongoClient
-
-from lstm import train as trainModel
-from xgboost__ import trainModel as trainXGBoost
-
 from plotly.subplots import make_subplots
 from plotly import offline
+
+from models.lstm import train as trainLSTM
+from models.xgboost__ import train as trainXGBoost
+
 
 DATABASE_NAME = 'fer'
 mongoURL = 'mongodb://localhost:27017/'
@@ -39,12 +39,19 @@ def getBTCDataFrame():
 
     return df
 
+# Normalize
+
+
+def normalize(dev, df, column):
+
+    dev[column] = (df[column] - df[column].min()) / \
+        (df[column].max() - df[column].min())
+
+# Standardize
+
 
 def calculateZScore(dev, df, column):
 
-    # dev[column] = (df[column] - df[column].mean()) / df[column].std()
-    # dev[column] = (dev[column] - dev[column].min()) / \
-    #     (dev[column].max() - dev[column].min())
     dev[column] = (df[column] - df[column].rolling(WINDOW_SIZE).mean()
                    )/df[column].rolling(WINDOW_SIZE).std(ddof=0)
 
@@ -58,19 +65,16 @@ def calculateShareOfEmotion(share, df, column):
 def render(share, dev, btc):
     btc = btc.merge(dev[['count', 'date']], on='date', how='right')
 
-    DATAFRAME_COLUMNS = ['anger', 'anticipation', 'disgust', 'fear', 'joy', 'negative',
-                         'positive', 'sadness', 'surprise', 'trust', 'count']
-
     fig = make_subplots(rows=4, cols=1,  shared_xaxes=True, subplot_titles=(
         'Rolling z-score for 24h window', 'Emotion word count share in total count', 'Bitcoin price', 'Bitcoin volume'))
 
     # ==================== DEVIATIONS ====================
-    for em in DATAFRAME_COLUMNS:
+    for em in EMOTIONS:
         fig.add_scatter(x=dev['date'], y=dev[em],
                         mode='lines', row=1, col=1, name="Standard dev./" + em)
 
     # ==================== SHARES ====================
-    for em in DATAFRAME_COLUMNS[:-1]:
+    for em in EMOTIONS[:-1]:
         fig.add_scatter(x=share['date'], y=share[em],
                         mode='lines', row=2, col=1, name="Share/" + em)
 
@@ -109,7 +113,6 @@ def main(plot=None, train=None, window=WINDOW_SIZE):
 
     dev.dropna(axis="rows", inplace=True)
     share.dropna(axis="rows", inplace=True)
-    # btc.fillna(method='ffill', inplace=True)
 
     if plot is not None:
         render(share, dev, btc)
@@ -117,10 +120,8 @@ def main(plot=None, train=None, window=WINDOW_SIZE):
     if train is not None:
 
         test_data = share.merge(btc, on="date", how="inner")[
-            ['close', 'return', 'positive', 'negative', 'trust', 'anticipation', 'date']]
-        # test_data.plot(
-        #     x="date", subplots=True, figsize=(14, 8), fontsize=12)
-        model = (trainXGBoost if train == 'xgboost' else trainModel)(test_data)
+            EMOTIONS[:-1] + ['date'] + ['return', 'close']]
+        model = (trainXGBoost if train == 'xgboost' else trainLSTM)(test_data)
 
 
 if __name__ == "__main__":
