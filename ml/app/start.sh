@@ -1,2 +1,1 @@
-cd static
-python -m SimpleHTTPServer
+cd static && python -m SimpleHTTPServer

@@ -40,7 +40,7 @@ def render(share, dev, btc):
                 row=4, col=1, name='Bitcoin volume (hourly)')
     fig.update_layout(title_text="BTC tweets lexicon analysis")
 
-    offline.plot(fig, filename='index.html', auto_open=True)
+    offline.plot(fig, filename='static/index.html', auto_open=True)
 
 # =================== MAIN CLI APP ===================
 

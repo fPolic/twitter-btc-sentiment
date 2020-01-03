@@ -8,7 +8,10 @@ RUN pip install xgboost
 RUN pip install plotly
 RUN pip install matplotlib
 RUN pip install numpy
+RUN pip install fire
 RUN pip install tensorflow
 
-ENTRYPOINT [ "start.sh" ]
+EXPOSE 80
+
+ENTRYPOINT [ "sh", "start.sh" ]
 CMD [ "/bin/sh" ]
