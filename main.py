@@ -8,4 +8,4 @@ if __name__ == '__main__':
     # process_tweets_emotions()
     # insert_tweets()
     # aggregate_tweet_emotions_by_houre()
-    join_time_series()
+    # join_time_series()

@@ -12,6 +12,5 @@ __pycache__
 
 # data files
 data/
-static/timeseries.html
 # dependencies
 node_modules/
