@@ -3,8 +3,9 @@ import datetime
 import pandas as pd
 
 from numpy import array
-from plotly.subplots import make_subplots
 from plotly import offline
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 from models.lstm import train as trainLSTM
 from models.xgboost__ import train as trainXGBoost
@@ -20,8 +21,8 @@ def render(share, dev, btc):
     btc = btc.merge(dev[['count']], right_index=True,
                     left_index=True, how='right')
 
-    fig = make_subplots(rows=4, cols=1,  shared_xaxes=True, subplot_titles=(
-        'Rolling z-score for 24h window', 'Emotion word count share in total count', 'Bitcoin price', 'Bitcoin volume'))
+    fig = make_subplots(rows=2, cols=2,  shared_xaxes=False, subplot_titles=(
+        'Rolling z-score for 24h window', 'Emotion word count share in total count', 'Bitcoin price', 'Emotions boxplot'))
 
     # ==================== DEVIATIONS ====================
     for em in EMOTIONS:
@@ -31,16 +32,20 @@ def render(share, dev, btc):
     # ==================== SHARES ====================
     for em in EMOTIONS[:-1]:
         fig.add_scatter(x=share.index, y=share[em],
-                        mode='lines', row=2, col=1, name="Share/" + em)
+                        mode='lines', row=1, col=2, name="Share/" + em)
+        fig.add_box(y=share[em],
+                    row=2, col=2, name="Box/" + em)
 
     # ==================== BITCOIN ====================
     fig.add_scatter(x=btc.index, y=btc['close'],
-                    mode='lines', row=3, col=1, name='Bitcoin close price (hourly)')
-    fig.add_bar(x=btc.index, y=btc['volume'],
-                row=4, col=1, name='Bitcoin volume (hourly)')
+                    mode='lines', row=2, col=1, name='Bitcoin close price (hourly)')
+
+    # fig.add_bar(x=btc.index, y=btc['volume'],
+    #             row=2, col=2, name='Bitcoin volume (hourly)')
+
     fig.update_layout(title_text="BTC tweets lexicon analysis")
 
-    offline.plot(fig, filename='static/index.html', auto_open=True)
+    offline.plot(fig, filename='static/graphs.html', auto_open=True)
 
 # =================== MAIN CLI APP ===================
 
@@ -56,11 +61,12 @@ def main(plot=None, train=None, serve=False, window=WINDOW_SIZE):
 
     if plot is not None:
         render(share, dev, btc)
+        print(share.describe())
 
     if train is not None:
 
         test_data = share.merge(btc, right_index=True, left_index=True, how="inner")[
-            EMOTIONS[:-1] + ['return', 'close']]
+            EMOTIONS[:-1] + ['return', 'close', 'volume']]
         model = (trainXGBoost if train == 'xgboost' else trainLSTM)(test_data)
 
 
