@@ -42,6 +42,26 @@ def calculateStandardDev(dev, df, column):
 
 def render(emotions, share, dev, btc):
 
+    # ======================================== BOXPLOTS ========================================
+
+    # monthly = emotions[emotions.index.month == 1]
+    # print(monthly)
+
+    # fig = make_subplots(rows=2,  shared_xaxes=True, subplot_titles=(
+    #     'Emotional word count per hour', 'Bitcoin price'))
+
+    # fig.add_box(y=monthly[['anger', 'fear']], x=emotions.groupby(by=[emotions.index.month]).sum().index,
+    #             row=1, col=1)
+
+    # fig.update_layout(
+    #     title_text="Emotions boxplots monthly", legend_orientation="v")
+
+    # offline.plot(fig, filename='static/histogram.html', auto_open=True)
+
+    # return
+
+    # ======================================== OVERVIEW ========================================
+
     fig = make_subplots(rows=2,  shared_xaxes=True, subplot_titles=(
         'Emotional word count per hour', 'Bitcoin price'))
 
@@ -60,43 +80,33 @@ def render(emotions, share, dev, btc):
 
     # ======================================== EMOTIONS ========================================
 
-    fig = make_subplots(rows=2,  shared_xaxes=True, subplot_titles=(
-        'Emotion word count share in total count', 'Bitcoin price'))
+    fig = make_subplots(rows=3,  shared_xaxes=False, subplot_titles=(
+        'Emotion word count share in total count', 'Emotions standard deviations', "Emotions box plot"))
 
     for em in EMOTIONS[:-1]:
+
         fig.add_scatter(x=share.index, y=share[em],
                         mode='lines', row=1, col=1, name="Share/" + em)
 
         fig.add_scatter(x=dev.index, y=dev[em],
                         mode='lines', row=2, col=1, name="Standard dev./" + em)
-        # fig.add_box(y=share[em],
-        #             row=2, col=2, name="Box/" + em)
+
+        fig.add_box(y=share[em],
+                    row=3, col=1, name="Box/" + em)
 
     fig.update_layout(title_text="Emotion share")
     offline.plot(fig, filename='static/emotions.html', auto_open=True)
 
-    return
+    # ======================================== DISTRIBUTION ========================================
 
-    fig = make_subplots(rows=2, cols=2,  shared_xaxes=False, subplot_titles=(
-        'Rolling z-score for 24h window', 'Emotion word count share in total count', 'Bitcoin price', 'Emotions boxplot'))
-
-    # ==================== DEVIATIONS ====================
-
-    # ==================== SHARES ====================
-
-    # print(share.resample('M').sum())
-
-    # ==================== BITCOIN ====================
-
-    fig.update_layout(title_text="BTC tweets lexicon analysis")
-
-    offline.plot(fig, filename='static/graphs.html', auto_open=True)
+    fig = make_subplots(rows=3,  shared_xaxes=False,
+                        subplot_titles=('Emotions histogram'))
 
     fig = ff.create_distplot(
         [share[c] for c in EMOTIONS[:-1]], EMOTIONS[:-1], bin_size=0.0)
 
     fig.update_layout(
-        title_text="Emotions distribution histogram", legend_orientation="v")
+        title_text="Emotions distribution histogram", legend_orientation="h")
 
     offline.plot(fig, filename='static/histogram.html', auto_open=True)
 
@@ -109,7 +119,6 @@ def main(plot=None, train=None, serve=False, window=WINDOW_SIZE):
     WINDOW_SIZE = window  # optional param overrides default
 
     emotions = getEmotionsDataFrame()
-    print(emotions)
 
     # Dataframes are indexed by data
     btc = pd.read_csv('timeseries/btc.csv', index_col='date')
@@ -130,7 +139,6 @@ def main(plot=None, train=None, serve=False, window=WINDOW_SIZE):
 
     if plot is not None:
         render(emotions, share, dev, btc)
-        print(share.describe())
 
     if train is not None:
 

@@ -1,5 +1,5 @@
 
-__SPLIT_DATE__ = '2018-10-12'
+__SPLIT_DATE__ = '2018-09-30'
 # Drop data before this date
 # FROM_DATA = '2018-09-02'
 

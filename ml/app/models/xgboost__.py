@@ -3,8 +3,10 @@ import xgboost as xgb
 from sklearn.metrics import r2_score
 from sklearn.linear_model import LinearRegression
 
+from numpy import around
 from plotly import offline
 import plotly.express as px
+import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from matplotlib import pyplot
@@ -22,7 +24,7 @@ def train(data):
     reg.fit(X_train, y_train,
             eval_set=[(X_train, y_train), (X_test, y_test)],
             early_stopping_rounds=50,
-            verbose=True)
+            verbose=False)
 
     pred = reg.predict(X_test)
     pred_lin = lin.predict(X_test)
@@ -30,9 +32,14 @@ def train(data):
 
     X_test['pred'] = pred
 
+    xgb_r2 = "XGBoost r2: " + \
+        str(around(r2_score(y_test['target'], pred), decimals=4))
+    lin_r2 = "Lin. reg. r2: " + \
+        str(around(r2_score(y_test['target'], pred_lin), decimals=4))
+
     print("XGBoost feature importance: ", reg.get_booster().get_score())
-    print("XGBoost r2: ", r2_score(y_test['target'], pred))
-    print("Lin. reg. r2: ", r2_score(y_test['target'], pred_lin))
+    print(xgb)
+    print(lin_r2)
 
     # ==================== PLOT RESULTS & FEATURES IMPORTANCE ===================
 
@@ -44,8 +51,15 @@ def train(data):
     fig.add_scatter(x=X_test.index, y=pred_lin, mode='lines',
                     name='Linear reg. predicted', row=1, col=1)
 
-    # fig.add_bar(
-    #     data=reg.get_booster().get_score(), name='features', row=2, col=1)
+    fig.add_trace(go.Scatter(
+        x=[X_test.index[150], X_test.index[150]],
+        y=[0.077, 0.067],
+        mode='text',
+        name='R2 score',
+        text=[lin_r2, xgb_r2],
+        textposition='bottom center'
+    ))
 
-    fig.update_layout(title_text="Model performances", height=700)
+    fig.update_layout(title_text="Model performances",
+                      legend_orientation="v", height=900)
     offline.plot(fig, filename='static/model.html', auto_open=True)
