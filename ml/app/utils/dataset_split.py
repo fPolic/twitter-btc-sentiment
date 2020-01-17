@@ -1,23 +1,25 @@
 
-__SPLIT_DATE__ = '2019-01-14'
+__SPLIT_DATE__ = '2018-10-12'
 # Drop data before this date
-FROM_DATA = '2018-09-02'
+# FROM_DATA = '2018-09-02'
 
 
 def split_dataframe(data, SPLIT_DATE=__SPLIT_DATE__):
     # data -> Pandas dataframe indexed by date
-    data = data.loc[FROM_DATA:]
+
+    # data = data.loc[FROM_DATA:]
 
     data['return'] = data['return'].abs()
     data['target'] = data['return'].shift(-1)
+    data['volume'] = data['volume'].diff()
 
     data.dropna(axis="rows", inplace=True)
+    print(data.head())
 
     train = data.loc[data.index < SPLIT_DATE]
     test = data.loc[data.index > SPLIT_DATE]
 
-    FEATURES = ['return', 'anger', 'anticipation', 'disgust', 'fear', 'joy', 'negative',
-                'positive', 'sadness', 'surprise']
+    FEATURES = ['return',  'volume',  'anticipation',  'negative', 'sadness']
 
     TARGET = ['target']
 

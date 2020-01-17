@@ -26,6 +26,7 @@ def train(data):
 
     pred = reg.predict(X_test)
     pred_lin = lin.predict(X_test)
+    print(X_train.shape, y_test.shape)
 
     X_test['pred'] = pred
 
