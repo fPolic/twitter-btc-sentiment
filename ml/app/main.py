@@ -44,16 +44,60 @@ def calculateStandardDev(dev, df, column):
 
 def render(emotions, share, dev, btc):
 
-    # ======================================== BOXPLOTS ========================================
+    # ======================================== BOXPLOTS (H) ========================================
+
+    fig = make_subplots(rows=5, cols=2, subplot_titles=[
+                        x for x in EMOTIONS[:-1]], shared_yaxes=True)
+
+    row = 0
+    groups = emotions.groupby([emotions.index.hour])
+    for em in EMOTIONS[:-1]:
+        row = row + 1
+        for key, group in groups:
+            fig.add_trace(go.Box(
+                y=group[em].values,
+                name=str(key),
+            ), row=row % 5 + 1, col=row % 2 + 1)
+
+    fig.update_layout(
+        title_text="Emotions boxplots hourly", showlegend=False, height=1500)
+
+    offline.plot(fig, filename='static/boxplots-hourly.html', auto_open=True)
+
+  # ======================================== BOXPLOTS (D) ========================================
 
     fig = make_subplots(rows=5, cols=2, subplot_titles=[
                         x for x in EMOTIONS[:-1]])
 
     row = 0
+    days = ['Monday', 'Tuesday', 'Wednesday',
+            'Thursday', 'Friday', 'Saturday', 'Sunday']
+    by_day = dict()
+    for key, group in emotions.groupby([emotions.index.weekday_name]):
+        by_day[key] = group
     for em in EMOTIONS[:-1]:
         row = row + 1
-        for key, group in emotions.groupby([emotions.index.year, emotions.index.month]):
-            # anger[key] = group['anger'].values
+        for day in days:
+            fig.add_trace(go.Box(
+                y=by_day[day][em].values,
+                name=str(day),
+            ), row=row % 5 + 1, col=row % 2 + 1)
+
+    fig.update_layout(
+        title_text="Emotions boxplots daily", showlegend=False, height=1500)
+
+    offline.plot(fig, filename='static/boxplots-daily.html', auto_open=True)
+
+    # ======================================== BOXPLOTS (M) ========================================
+
+    fig = make_subplots(rows=5, cols=2, subplot_titles=[
+                        x for x in EMOTIONS[:-1]])
+
+    row = 0
+    groups = emotions.groupby([emotions.index.month])
+    for em in EMOTIONS[:-1]:
+        row = row + 1
+        for key, group in groups:
             fig.add_trace(go.Box(
                 y=group[em].values,
                 name=str(key),
@@ -62,7 +106,7 @@ def render(emotions, share, dev, btc):
     fig.update_layout(
         title_text="Emotions boxplots monthly", showlegend=False, height=1500)
 
-    offline.plot(fig, filename='static/boxplots.html', auto_open=True)
+    offline.plot(fig, filename='static/boxplots-monthly.html', auto_open=True)
 
     # ======================================== OVERVIEW ========================================
 
@@ -90,13 +134,13 @@ def render(emotions, share, dev, btc):
     for em in EMOTIONS[:-1]:
 
         fig.add_scatter(x=share.index, y=share[em],
-                        mode='lines', row=1, col=1, name="Share/" + em, legendgroup="Share")
+                        mode='lines', row=1, col=1, name="Share/" + em, legendgroup=em)
 
         fig.add_scatter(x=dev.index, y=dev[em],
-                        mode='lines', row=2, col=1, name="Standard dev./" + em, legendgroup="Dev")
+                        mode='lines', row=2, col=1, name="Standard dev./" + em, legendgroup=em)
 
         fig.add_box(y=share[em],
-                    row=3, col=1, name="Box/" + em, legendgroup="Boxplot")
+                    row=3, col=1, name="Box/" + em, legendgroup=em)
 
     fig.update_layout(title_text="Emotion share")
     offline.plot(fig, filename='static/emotions.html', auto_open=True)

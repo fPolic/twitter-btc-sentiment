@@ -3,11 +3,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Lato:400,700&display=swap"
+      rel="stylesheet"
+    />
     <title>Twitter emotions & BTC</title>
 
     <style>
       html,
       body {
+        margin: 0;
         height: 100%;
       }
 
@@ -17,26 +22,48 @@
 
         display: flex;
         align-items: center;
-        justify-content: space-around;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      main section {
+        padding: 16px;
+        align-items: center;
+        justify-content: center;
       }
 
       main a {
         color: #333;
         padding: 16px;
         font-size: 20px;
+        font-family: Lato;
+        font-weight: 700;
         text-decoration: none;
         text-transform: uppercase;
+      }
+
+      main a:hover {
+        color: tomato;
+        transition: color 0.3s;
       }
     </style>
   </head>
   <body>
     <main>
       <main>
-        <a href="/overview.html">Overview</a>
-        <a href="/emotions.html">Emotions</a>
-        <a href="/boxplots.html">Boxplots (M)</a>
-        <a href="/histogram.html">Emotions histogram</a>
-        <a href="/model.html">Model performance</a>
+        <section>
+          <a href="/overview.html">Overview</a>
+          <a href="/emotions.html">Emotions</a>
+          <a href="/model.html">Model performance</a>
+        </section>
+        <section>
+          <a href="/boxplots-hourly.html">Boxplots (H)</a>
+          <a href="/boxplots-daily.html">Boxplots (D)</a>
+          <a href="/boxplots-monthly.html">Boxplots (M)</a>
+        </section>
+        <section>
+          <a href="/histogram.html">Emotions histogram</a>
+        </section>
       </main>
     </main>
   </body>
