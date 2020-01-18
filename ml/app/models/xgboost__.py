@@ -1,5 +1,4 @@
 import xgboost as xgb
-from hyperopt import fmin, tpe, STATUS_OK, STATUS_FAIL, Trials, space_eval, hp
 
 from numpy import around, arange, sqrt
 from sklearn.linear_model import LinearRegression
@@ -40,51 +39,8 @@ def train_linear(data, fig):
     print(lin_r2)
 
 
-def get_hyperparams(X_train, y_train, X_test, y_test):
-    xgb_reg_params = {
-        'eta':              0.3,
-        'min_child_weight':  300,
-        'colsample_bytree': 0.8,
-        'subsample':        0.8,
-        'n_estimators':     1000,
-        'colsample_bytree': 0.8,
-        'max_depth':        16,
-        'seed': 50,
-    }
-
-    xgb_fit_params = {
-        'eval_metric': 'rmse',
-        'early_stopping_rounds': 10,
-        'verbose': False
-    }
-
-    def loss_function(y, pred): return sqrt(mean_squared_error(y, pred))
-
-    def fn(para):
-        reg = xgb.XGBRegressor(**para['reg_params'])
-        reg.fit(X_train,  y_train,
-                eval_set=[(X_train, y_train), (X_test, y_test)],
-                **para['fit_params'])
-        pred = reg.predict(X_test)
-        loss = para['loss_func'](y_test, pred)
-        return {'loss': loss, 'status': STATUS_OK}
-
-    xgb_para = dict()
-    xgb_para['reg_params'] = xgb_reg_params
-    xgb_para['fit_params'] = xgb_fit_params
-    xgb_para['loss_func'] = loss_function
-
-    res = fmin(fn=fn, space=xgb_para, algo=tpe.suggest,
-               max_evals=100, trials=Trials())
-
-    return space_eval(xgb_para, res)
-
-
 def train_xgboost(data, fig):
     X_train, y_train, X_test, y_test = split_dataframe(data)
-
-    # params = get_hyperparams(X_train, y_train, X_test, y_test)
-    # print(params)
 
     reg = xgb.XGBRegressor(
         max_depth=14,
@@ -98,7 +54,7 @@ def train_xgboost(data, fig):
 
     reg.fit(X_train, y_train,
             eval_set=[(X_train, y_train), (X_test, y_test)],
-            early_stopping_rounds=10)
+            early_stopping_rounds=10, verbose=False)
 
     pred = reg.predict(X_test)
 

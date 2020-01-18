@@ -5,6 +5,8 @@ import pandas as pd
 from numpy import array
 from pymongo import MongoClient
 
+from pandas import Grouper
+
 from plotly import offline
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
@@ -44,21 +46,23 @@ def render(emotions, share, dev, btc):
 
     # ======================================== BOXPLOTS ========================================
 
-    # monthly = emotions[emotions.index.month == 1]
-    # print(monthly)
+    fig = make_subplots(rows=5, cols=2, subplot_titles=[
+                        x for x in EMOTIONS[:-1]])
 
-    # fig = make_subplots(rows=2,  shared_xaxes=True, subplot_titles=(
-    #     'Emotional word count per hour', 'Bitcoin price'))
+    row = 0
+    for em in EMOTIONS[:-1]:
+        row = row + 1
+        for key, group in emotions.groupby([emotions.index.year, emotions.index.month]):
+            # anger[key] = group['anger'].values
+            fig.add_trace(go.Box(
+                y=group[em].values,
+                name=str(key),
+            ), row=row % 5 + 1, col=row % 2 + 1)
 
-    # fig.add_box(y=monthly[['anger', 'fear']], x=emotions.groupby(by=[emotions.index.month]).sum().index,
-    #             row=1, col=1)
+    fig.update_layout(
+        title_text="Emotions boxplots monthly", showlegend=False, height=1500)
 
-    # fig.update_layout(
-    #     title_text="Emotions boxplots monthly", legend_orientation="v")
-
-    # offline.plot(fig, filename='static/histogram.html', auto_open=True)
-
-    # return
+    offline.plot(fig, filename='static/boxplots.html', auto_open=True)
 
     # ======================================== OVERVIEW ========================================
 
@@ -86,13 +90,13 @@ def render(emotions, share, dev, btc):
     for em in EMOTIONS[:-1]:
 
         fig.add_scatter(x=share.index, y=share[em],
-                        mode='lines', row=1, col=1, name="Share/" + em)
+                        mode='lines', row=1, col=1, name="Share/" + em, legendgroup="Share")
 
         fig.add_scatter(x=dev.index, y=dev[em],
-                        mode='lines', row=2, col=1, name="Standard dev./" + em)
+                        mode='lines', row=2, col=1, name="Standard dev./" + em, legendgroup="Dev")
 
         fig.add_box(y=share[em],
-                    row=3, col=1, name="Box/" + em)
+                    row=3, col=1, name="Box/" + em, legendgroup="Boxplot")
 
     fig.update_layout(title_text="Emotion share")
     offline.plot(fig, filename='static/emotions.html', auto_open=True)

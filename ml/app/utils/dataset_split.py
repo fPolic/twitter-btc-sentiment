@@ -1,9 +1,4 @@
 
-__SPLIT_DATE__ = '2018-09-30'
-# Drop data before this date
-# FROM_DATA = '2018-09-02'
-
-
 def process_df_for_linreg(data):
     data['return'] = data['return'].abs()
     data['volume'] = data['volume'].diff()
@@ -30,10 +25,8 @@ def process_df_for_xgboost(data):
     data.fillna(0, inplace=True)
 
 
-def split_dataframe(data, model_type="xgboost", SPLIT_DATE=__SPLIT_DATE__):
-    # data -> Pandas dataframe indexed by date
-
-    # data = data.loc[FROM_DATA:]
+# data -> Pandas dataframe indexed by date
+def split_dataframe(data, model_type="xgboost", SPLIT_DATE='2018-09-30'):
 
     if model_type == 'linreg':
         process_df_for_linreg(data)
