@@ -46,7 +46,8 @@ def getSPX():
 
     spx['return'] = (spx['close'] / spx['open']) - 1
 
-    return spx[['open', 'close', 'volume', 'return']]
+    return spx[['close', 'volume', 'return']].rename(columns={'close': 'spx_close',
+                                                              'volume': 'spx_volume', 'return': 'spx_return'})
 
 
 def calculateStandardDev(dev, df, column):
@@ -180,9 +181,7 @@ def main(plot=None, train=None, serve=False, window=WINDOW_SIZE):
     WINDOW_SIZE = window  # optional param overrides default
 
     emotions = getEmotionsDataFrame()
-    spx = getSPX()
-
-    print(spx.head())
+    # spx = getSPX()
 
     # Dataframes are indexed by data
     btc = pd.read_csv('timeseries/btc.csv', index_col='date')
@@ -208,6 +207,8 @@ def main(plot=None, train=None, serve=False, window=WINDOW_SIZE):
 
         test_data = dev.merge(btc, right_index=True, left_index=True, how="left")[
             EMOTIONS[:-1] + ['return', 'close', 'volume']]
+        # test_data = test_data.merge(
+        #     spx, right_index=True, left_index=True, how="left")
         model = (trainXGBoost if train == 'xgboost' else trainLSTM)(test_data)
 
 

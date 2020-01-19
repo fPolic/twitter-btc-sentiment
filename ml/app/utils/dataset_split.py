@@ -1,3 +1,5 @@
+import pandas as pd
+
 
 def process_df_for_linreg(data):
     data['return'] = data['return'].abs()
@@ -5,6 +7,7 @@ def process_df_for_linreg(data):
     data['hour'] = data.index.hour
 
     data['target'] = data['return'].shift(-1)
+    # data['spx_return'] = data['spx_return'].abs()
 
     # data['dayOfWeek'] = data.index.dayofweek
     # data['dayOfMonth'] = data.index.day
@@ -16,6 +19,8 @@ def process_df_for_xgboost(data):
     data['return'] = data['return'].abs()
     data['volume'] = data['volume']
     data['hour'] = data.index.hour
+
+    # data['spx_return'] = data['spx_return'].abs()
 
     data['target'] = data['return'].shift(-1)
 
@@ -39,10 +44,17 @@ def split_dataframe(data, model_type="xgboost", SPLIT_DATE='2018-09-30'):
 
     data = data.round(4)
 
+    # data['dd'] = data.index
+    # data['gap'] = (data['dd'].diff() /
+    #                pd.to_timedelta('1 hour')).fillna(0)
+
+    # print(data.head(200))
+    # data = data[data['gap'] < 2]
+
     train = data.loc[data.index < SPLIT_DATE]
     test = data.loc[data.index > SPLIT_DATE]
 
-    FEATURES = ['return',  'volume', 'sadness',
+    FEATURES = ['return', 'volume', 'sadness',
                 'negative', 'anticipation', 'disgust', 'hour']
 
     TARGET = ['target']
