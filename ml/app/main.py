@@ -61,7 +61,7 @@ def render(emotions, share, dev, btc):
     # ======================================== BOXPLOTS (H) ========================================
 
     fig = make_subplots(rows=5, cols=2, subplot_titles=[
-                        x for x in EMOTIONS[:-1]], shared_yaxes=True)
+                        x for x in EMOTIONS[:-1]])
 
     row = 0
     groups = emotions.groupby([emotions.index.hour])
@@ -72,6 +72,10 @@ def render(emotions, share, dev, btc):
                 y=group[em].values,
                 name=str(key),
             ), row=row % 5 + 1, col=row % 2 + 1)
+
+        avg = emotions[em].mean()
+        fig.add_scatter(y=[avg for _ in range(
+            24)], mode="lines+markers", row=row % 5 + 1, col=row % 2 + 1)
 
     fig.update_layout(
         title_text="Emotions boxplots hourly", showlegend=False, height=1500)
@@ -97,6 +101,10 @@ def render(emotions, share, dev, btc):
                 name=str(day),
             ), row=row % 5 + 1, col=row % 2 + 1)
 
+        avg = emotions[em].mean()
+        fig.add_scatter(y=[avg for _ in range(
+            7)], x=days, mode="lines+markers", row=row % 5 + 1, col=row % 2 + 1)
+
     fig.update_layout(
         title_text="Emotions boxplots daily", showlegend=False, height=1500)
 
@@ -116,6 +124,10 @@ def render(emotions, share, dev, btc):
                 y=group[em].values,
                 name=str(key),
             ), row=row % 5 + 1, col=row % 2 + 1)
+
+        avg = emotions[em].mean()
+        fig.add_scatter(y=[avg for _ in range(
+            12)], x=list(range(1, 13)), mode="lines+markers", row=row % 5 + 1, col=row % 2 + 1)
 
     fig.update_layout(
         title_text="Emotions boxplots monthly", showlegend=False, height=1500)
@@ -153,7 +165,7 @@ def render(emotions, share, dev, btc):
         fig.add_scatter(x=dev.index, y=dev[em],
                         mode='lines', row=2, col=1, name="Standard dev./" + em, legendgroup=em)
 
-        fig.add_box(y=share[em],
+        fig.add_box(y=emotions[em],
                     row=3, col=1, name="Box/" + em, legendgroup=em)
 
     fig.update_layout(title_text="Emotion share")

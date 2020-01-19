@@ -4,9 +4,6 @@ from numpy import around, arange, sqrt
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_squared_error
 
-# from xgboost import plot_importance
-# from matplotlib import pyplot
-
 from plotly import offline
 import plotly.express as px
 import plotly.graph_objects as go
@@ -84,9 +81,6 @@ def train_xgboost(data, fig):
 
     features = {k: v for k, v in sorted(
         reg.get_booster().get_score().items(), key=lambda item: item[1])}
-
-    # plot_importance(reg)
-    # pyplot.show()
 
     f = list()
     fv = list()
