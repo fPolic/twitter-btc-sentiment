@@ -79,8 +79,6 @@ def train_xgboost(data, fig):
 
     print(X_train.shape, y_test.shape)
 
-    X_test['pred'] = pred
-
     xgb_r2 = "XGBoost R2: " + \
         str(around(r2_score(y_test['target'], pred), decimals=4))
 
@@ -102,7 +100,7 @@ def train_xgboost(data, fig):
     fig.add_scatter(
         x=X_test.index, y=y_test['target'], marker_color=colors[0], mode='lines', name='BTC absolute returns', row=1, col=1)
     fig.add_scatter(
-        x=X_test.index, y=X_test['pred'], mode='lines', marker_color=colors[1], name='XGBoost predicted', row=1, col=1)
+        x=X_test.index, y=pred, mode='lines', marker_color=colors[1], name='XGBoost predicted', row=1, col=1)
 
     fig.add_trace(go.Bar(x=fv, y=f, orientation='h',
                          name='XGBoost feature importance', width=0.5, marker_color='#333'),

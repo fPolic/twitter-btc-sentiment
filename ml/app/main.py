@@ -36,6 +36,19 @@ def getEmotionsDataFrame():
     return _emotion[EMOTIONS]
 
 
+def getSPX():
+    collection = DB["spx"]
+    cursor = list(collection.find(no_cursor_timeout=True))
+
+    spx = pd.DataFrame(cursor)
+    spx.set_index("date", inplace=True)
+    spx.index = pd.to_datetime(spx.index)
+
+    spx['return'] = (spx['close'] / spx['open']) - 1
+
+    return spx[['open', 'close', 'volume', 'return']]
+
+
 def calculateStandardDev(dev, df, column):
     dev[column] = (df[column]-df[column].mean())/df[column].std(ddof=0)
 
@@ -167,6 +180,9 @@ def main(plot=None, train=None, serve=False, window=WINDOW_SIZE):
     WINDOW_SIZE = window  # optional param overrides default
 
     emotions = getEmotionsDataFrame()
+    spx = getSPX()
+
+    print(spx.head())
 
     # Dataframes are indexed by data
     btc = pd.read_csv('timeseries/btc.csv', index_col='date')

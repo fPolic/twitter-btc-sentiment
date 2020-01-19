@@ -37,11 +37,14 @@ def split_dataframe(data, model_type="xgboost", SPLIT_DATE='2018-09-30'):
     else:
         process_df_for_xgboost(data)
 
+    data = data.round(4)
+
     train = data.loc[data.index < SPLIT_DATE]
     test = data.loc[data.index > SPLIT_DATE]
 
     FEATURES = ['return',  'volume', 'sadness',
                 'negative', 'anticipation', 'disgust', 'hour']
+
     TARGET = ['target']
 
     X_train = train[FEATURES]
