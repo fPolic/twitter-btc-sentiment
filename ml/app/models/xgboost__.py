@@ -121,6 +121,6 @@ def train(data):
     train_linear(data.copy(), fig)
     train_xgboost(data.copy(), fig)
 
-    fig.update_layout(title_text="Model performances",
+    fig.update_layout(title_text="Model performance",
                       legend_orientation="v", height=900)
     offline.plot(fig, filename='static/model.html', auto_open=True)

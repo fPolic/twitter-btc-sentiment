@@ -78,7 +78,7 @@ def render(emotions, share, dev, btc):
             24)], mode="lines+markers", row=row % 5 + 1, col=row % 2 + 1)
 
     fig.update_layout(
-        title_text="Emotions boxplots hourly", showlegend=False, height=1500)
+        title_text="Emotion box plots hourly", showlegend=False, height=1500)
 
     offline.plot(fig, filename='static/boxplots-hourly.html', auto_open=True)
 
@@ -106,7 +106,7 @@ def render(emotions, share, dev, btc):
             7)], x=days, mode="lines+markers", row=row % 5 + 1, col=row % 2 + 1)
 
     fig.update_layout(
-        title_text="Emotions boxplots daily", showlegend=False, height=1500)
+        title_text="Emotion box plots daily", showlegend=False, height=1500)
 
     offline.plot(fig, filename='static/boxplots-daily.html', auto_open=True)
 
@@ -130,14 +130,14 @@ def render(emotions, share, dev, btc):
             12)], x=list(range(1, 13)), mode="lines+markers", row=row % 5 + 1, col=row % 2 + 1)
 
     fig.update_layout(
-        title_text="Emotions boxplots monthly", showlegend=False, height=1500)
+        title_text="Emotion box plots monthly", showlegend=False, height=1500)
 
     offline.plot(fig, filename='static/boxplots-monthly.html', auto_open=True)
 
     # ======================================== OVERVIEW ========================================
 
     fig = make_subplots(rows=2,  shared_xaxes=True, subplot_titles=(
-        'Emotional word count per hour', 'Bitcoin price'))
+        'Number of words associated with emotion (per hour)', 'Bitcoin close price'))
 
     for em in EMOTIONS[:-1]:
         fig.add_scatter(x=emotions.index, y=emotions[em],
@@ -155,7 +155,7 @@ def render(emotions, share, dev, btc):
     # ======================================== EMOTIONS ========================================
 
     fig = make_subplots(rows=3,  shared_xaxes=False, subplot_titles=(
-        'Emotion word count share in total count', 'Emotions standard deviations', "Emotions box plot"))
+        'Share of words containing certain emotion in total word count', 'Number of words associated with emotion normalised', "Emotions box plot"))
 
     for em in EMOTIONS[:-1]:
 
@@ -180,7 +180,7 @@ def render(emotions, share, dev, btc):
         [share[c] for c in EMOTIONS[:-1]], EMOTIONS[:-1], bin_size=0.0)
 
     fig.update_layout(
-        title_text="Emotions distribution histogram", legend_orientation="h")
+        title_text="Emotion distribution histogram", legend_orientation="h")
 
     offline.plot(fig, filename='static/histogram.html', auto_open=True)
 
