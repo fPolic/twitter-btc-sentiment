@@ -24,6 +24,19 @@ WINDOW_SIZE = 24
 EMOTIONS = ['anger', 'anticipation', 'disgust', 'fear', 'joy', 'negative',
             'positive', 'sadness', 'surprise', 'trust', 'count']
 
+colors = [
+    '#1f77b4',  # muted blue
+    '#ff7f0e',  # safety orange
+    '#2ca02c',  # cooked asparagus green
+    '#d62728',  # brick red
+    '#9467bd',  # muted purple
+    '#8c564b',  # chestnut brown
+    '#e377c2',  # raspberry yogurt pink
+    '#7f7f7f',  # middle gray
+    '#bcbd22',  # curry yellow-green
+    '#17becf'   # blue-teal
+]
+
 
 def getEmotionsDataFrame():
     collection = DB["emotions_aggregation"]
@@ -71,11 +84,12 @@ def render(emotions, share, dev, btc):
             fig.add_trace(go.Box(
                 y=group[em].values,
                 name=str(key),
+                line=dict(color=colors[row-1])
             ), row=row % 5 + 1, col=row % 2 + 1)
 
-        avg = emotions[em].mean()
+        avg = emotions[em].mean() + 3 * emotions[em].std(ddof=0)
         fig.add_scatter(y=[avg for _ in range(
-            24)], mode="lines+markers", row=row % 5 + 1, col=row % 2 + 1)
+            24)], mode="lines+markers", line=dict(width=4), row=row % 5 + 1, col=row % 2 + 1)
 
     fig.update_layout(
         title_text="Emotion box plots hourly", showlegend=False, height=1500)
@@ -99,11 +113,12 @@ def render(emotions, share, dev, btc):
             fig.add_trace(go.Box(
                 y=by_day[day][em].values,
                 name=str(day),
+                line=dict(color=colors[row-1])
             ), row=row % 5 + 1, col=row % 2 + 1)
 
         avg = emotions[em].mean()
         fig.add_scatter(y=[avg for _ in range(
-            7)], x=days, mode="lines+markers", row=row % 5 + 1, col=row % 2 + 1)
+            7)], x=days, mode="lines+markers", line=dict(width=4), row=row % 5 + 1, col=row % 2 + 1)
 
     fig.update_layout(
         title_text="Emotion box plots daily", showlegend=False, height=1500)
@@ -123,11 +138,12 @@ def render(emotions, share, dev, btc):
             fig.add_trace(go.Box(
                 y=group[em].values,
                 name=str(key),
+                line=dict(color=colors[row-1])
             ), row=row % 5 + 1, col=row % 2 + 1)
 
         avg = emotions[em].mean()
         fig.add_scatter(y=[avg for _ in range(
-            12)], x=list(range(1, 13)), mode="lines+markers", row=row % 5 + 1, col=row % 2 + 1)
+            12)], x=list(range(1, 13)), mode="lines+markers", line=dict(width=4), row=row % 5 + 1, col=row % 2 + 1)
 
     fig.update_layout(
         title_text="Emotion box plots monthly", showlegend=False, height=1500)
@@ -139,9 +155,11 @@ def render(emotions, share, dev, btc):
     fig = make_subplots(rows=2,  shared_xaxes=True, subplot_titles=(
         'Number of words associated with emotion (per hour)', 'Bitcoin close price'))
 
+    i = -1
     for em in EMOTIONS[:-1]:
+        i += 1
         fig.add_scatter(x=emotions.index, y=emotions[em],
-                        mode='lines', row=1, col=1, name=em)
+                        mode='lines', row=1, col=1, name=em, line=dict(color=colors[i]))
 
     btc = btc.merge(emotions[[]], right_index=True,
                     left_index=True, how='right')
@@ -154,21 +172,32 @@ def render(emotions, share, dev, btc):
 
     # ======================================== EMOTIONS ========================================
 
-    fig = make_subplots(rows=3,  shared_xaxes=False, subplot_titles=(
-        'Share of words containing certain emotion in total word count', 'Number of words associated with emotion normalised', "Emotions box plot"))
+    fig = make_subplots(rows=9, cols=2, specs=[
+        [{"colspan": 2, 'rowspan': 2}, None], [{}, {}], [{}, {}], [{}, {}], [{}, {}], [{}, {}], [{}, {}], [{"rowspan": 2}, {"rowspan": 2}],  [{}, {}]], subplot_titles=(
+        'Share of words containing certain emotion in total word count', '', '', *EMOTIONS[: -1], "Emotions box plot", "Total word counts per emotion"))
 
-    for em in EMOTIONS[:-1]:
-
+    sums = dict()
+    i = -1
+    for em in EMOTIONS[: -1]:
+        i += 1
         fig.add_scatter(x=share.index, y=share[em],
-                        mode='lines', row=1, col=1, name="Share/" + em, legendgroup=em)
+                        mode='lines', row=1, col=1, name="Share/" + em, legendgroup=em, line=dict(color=colors[i]))
 
         fig.add_scatter(x=dev.index, y=dev[em],
-                        mode='lines', row=2, col=1, name="Standard dev./" + em, legendgroup=em)
+                        mode='lines', row=3 + (i % 5), col=(i % 2) + 1, name="Standard dev./" + em, legendgroup=em, line=dict(color=colors[i]))
 
         fig.add_box(y=emotions[em],
-                    row=3, col=1, name="Box/" + em, legendgroup=em)
+                    row=8, col=1, name="Box/" + em, legendgroup=em, line=dict(color='#fecb52'))
 
-    fig.update_layout(title_text="Emotion share")
+        sums[em] = emotions[em].sum()
+
+    sums = list(sums.items())
+    sums.sort(key=lambda x: x[1])
+
+    fig.add_trace(go.Bar(y=[i[0] for i in sums], x=[i[1] for i in sums], orientation='h',
+                         name='Total word counts per emotion', marker_color='#636dfa'), row=8, col=2)
+
+    fig.update_layout(title_text="Emotion share", height=1500)
     offline.plot(fig, filename='static/emotions.html', auto_open=True)
 
     # ======================================== DISTRIBUTION ========================================

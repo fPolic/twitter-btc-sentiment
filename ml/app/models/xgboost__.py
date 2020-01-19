@@ -96,9 +96,8 @@ def train_xgboost(data, fig):
     fig.add_scatter(
         x=X_test.index, y=pred, mode='lines', marker_color=colors[1], name='XGBoost predicted', row=1, col=1)
 
-    fig.add_trace(go.Bar(x=fv, y=f, orientation='h',
-                         name='XGBoost feature importance', width=0.5, marker_color='#333'),
-                  row=2, col=1)
+    fig.add_trace(go.Bar(x=fv, y=f, orientation='h', name='XGBoost feature importance',
+                         width=0.5, marker_color='#333'), row=2, col=1)
 
     fig.add_trace(go.Scatter(
         x=[X_test.index[100]],
