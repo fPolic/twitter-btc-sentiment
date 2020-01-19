@@ -11,6 +11,19 @@ from plotly.subplots import make_subplots
 
 from utils.dataset_split import split_dataframe
 
+colors = [
+    '#1f77b4',  # muted blue
+    '#ff7f0e',  # safety orange
+    '#2ca02c',  # cooked asparagus green
+    '#d62728',  # brick red
+    '#9467bd',  # muted purple
+    '#8c564b',  # chestnut brown
+    '#e377c2',  # raspberry yogurt pink
+    '#7f7f7f',  # middle gray
+    '#bcbd22',  # curry yellow-green
+    '#17becf'   # blue-teal
+]
+
 
 def train_linear(data, fig):
     X_train, y_train, X_test, y_test = split_dataframe(
@@ -24,7 +37,7 @@ def train_linear(data, fig):
     lin_r2 = "Lin. reg. R2: " + \
         str(around(r2_score(y_test['target'], pred_lin), decimals=4))
 
-    fig.add_scatter(x=X_test.index, y=pred_lin, mode='lines',
+    fig.add_scatter(x=X_test.index, y=pred_lin, mode='lines', marker_color=colors[2],
                     name='Linear reg. predicted', row=1, col=1)
 
     fig.add_trace(go.Scatter(
@@ -33,7 +46,10 @@ def train_linear(data, fig):
         mode='text',
         text=[lin_r2],
         name='Linear reg. R2',
-        textposition='bottom right'
+        textposition='bottom right',
+        textfont=dict({
+             'size': 12,
+        })
     ))
 
     print(lin_r2)
@@ -65,13 +81,26 @@ def train_xgboost(data, fig):
     xgb_r2 = "XGBoost R2: " + \
         str(around(r2_score(y_test['target'], pred), decimals=4))
 
-    print("XGBoost feature importance: ", reg.get_booster().get_score())
+    features = {k: v for k, v in sorted(
+        reg.get_booster().get_score().items(), key=lambda item: item[1])}
+
+    f = list()
+    fv = list()
+    for k, v in features.items():
+        f.append(k)
+        fv.append(v)
+
+    print(features)
     print(xgb_r2)
 
     fig.add_scatter(
-        x=X_test.index, y=y_test['target'], marker_color=y_test['target'], mode='lines', name='BTC absolute returns', row=1, col=1)
+        x=X_test.index, y=y_test['target'], marker_color=colors[0], mode='lines', name='BTC absolute returns', row=1, col=1)
     fig.add_scatter(
-        x=X_test.index, y=X_test['pred'], mode='lines', name='XGBoost predicted', row=1, col=1)
+        x=X_test.index, y=X_test['pred'], mode='lines', marker_color=colors[1], name='XGBoost predicted', row=1, col=1)
+
+    fig.add_trace(go.Bar(x=fv, y=f, orientation='h',
+                         name='XGBoost feature importance', width=0.5, marker_color='#333'),
+                  row=2, col=1)
 
     fig.add_trace(go.Scatter(
         x=[X_test.index[100]],
@@ -79,13 +108,17 @@ def train_xgboost(data, fig):
         mode='text',
         text=[xgb_r2],
         name='XGBoost R2',
-        textposition='bottom right'
+        textposition='bottom right',
+        textfont=dict({
+            'size': 12,
+        })
     ))
 
 
 def train(data):
 
-    fig = make_subplots(shared_xaxes=False, rows=2, cols=1)
+    fig = make_subplots(shared_xaxes=False, specs=[
+        [{"colspan": 2}, None], [{}, {}]], rows=2, cols=2)
 
     train_linear(data.copy(), fig)
     train_xgboost(data.copy(), fig)
