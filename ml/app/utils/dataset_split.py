@@ -25,7 +25,11 @@ def process_df_for_xgboost(data):
     data.fillna(0, inplace=True)
 
 
+EMOTIONS = ['anger', 'anticipation', 'disgust', 'fear', 'joy', 'negative',
+            'positive', 'sadness', 'surprise', 'trust', 'count']
 # data -> Pandas dataframe indexed by date
+
+
 def split_dataframe(data, model_type="xgboost", SPLIT_DATE='2018-09-30'):
 
     if model_type == 'linreg':
@@ -36,7 +40,8 @@ def split_dataframe(data, model_type="xgboost", SPLIT_DATE='2018-09-30'):
     train = data.loc[data.index < SPLIT_DATE]
     test = data.loc[data.index > SPLIT_DATE]
 
-    FEATURES = ['return',  'volume',  'anticipation', 'sadness', 'hour']
+    FEATURES = ['return',  'volume', 'sadness',
+                'negative', 'anticipation', 'disgust', 'hour']
     TARGET = ['target']
 
     X_train = train[FEATURES]
