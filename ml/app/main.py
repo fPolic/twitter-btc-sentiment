@@ -87,7 +87,7 @@ def render(emotions, share, dev, btc):
                 line=dict(color=colors[row-1])
             ), row=row % 5 + 1, col=row % 2 + 1)
 
-        avg = emotions[em].mean() + 3 * emotions[em].std(ddof=0)
+        avg = emotions[em].mean()
         fig.add_scatter(y=[avg for _ in range(
             24)], mode="lines+markers", line=dict(width=4), row=row % 5 + 1, col=row % 2 + 1)
 
