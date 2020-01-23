@@ -230,7 +230,7 @@ def render(emotions, share, dev, btc):
         i += 1
         fig.add_scatter(x=emotions.index, y=emotions[em], legendgroup=em,
                         mode='lines', row=1, col=1, name=em, line=dict(color=colors[i]))
-        fig.add_box(y=emotions[em], legendgroup=em,
+        fig.add_box(y=share[em], legendgroup=em,
                     row=2, col=1, name="Box/" + em, line=dict(color='#fecb52'))
 
         sums[em] = emotions[em].sum()
