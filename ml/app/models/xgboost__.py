@@ -70,7 +70,7 @@ def train_xgboost(data, fig):
 
     reg.fit(X_train, y_train,
             eval_set=[(X_train, y_train), (X_test, y_test)],
-            early_stopping_rounds=10, verbose=False)
+            early_stopping_rounds=10, verbose=True)
 
     pred = reg.predict(X_test)
 

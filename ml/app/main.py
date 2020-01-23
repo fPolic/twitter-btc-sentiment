@@ -216,10 +216,9 @@ def render(emotions, share, dev, btc):
 
     # ======================================== OVERVIEW ========================================
 
-    fig = make_subplots(rows=4, cols=2, shared_xaxes=True, specs=[
+    fig = make_subplots(rows=3, cols=2, shared_xaxes=True, specs=[
         [{"colspan": 2, }, None],
         [{}, {}],
-        [{"colspan": 2, }, None],
         [{"colspan": 2, }, None]
     ], subplot_titles=(
         'Number of words associated with emotion (per hour)', 'Global boxplot for emotion', 'Total word count per emotion', 'Bitcoin close price', 'BTC vs. SPX. daily box plots'))
@@ -260,22 +259,7 @@ def render(emotions, share, dev, btc):
     for key, group in spx.groupby([spx.index.weekday_name]):
         by_day_spx[key] = group
 
-    for day in days:
-        fig.add_trace(go.Box(
-            marker_color='#3D9970',
-            y=by_day[day]['return'].values,
-            name=day,
-            legendgroup='BTC'
-        ), row=4, col=1)
-        if day not in ['Saturday', 'Sunday']:
-            fig.add_trace(go.Box(
-                marker_color='#FF851B',
-                y=by_day_spx[day]['spx_return'].values,
-                name=day,
-                legendgroup='SPX'
-            ), row=4, col=1)
-
-    fig.update_layout(title_text="Overview", boxmode='group', height=1200)
+    fig.update_layout(title_text="Overview", height=1200)
     offline.plot(fig, filename='static/overview.html', auto_open=True)
 
     # ======================================== EMOTIONS ========================================
@@ -349,7 +333,7 @@ def main(plot=None, train=None, serve=False, window=WINDOW_SIZE):
 
     if train is not None:
 
-        test_data = dev.merge(btc, right_index=True, left_index=True, how="left")[
+        test_data = share.merge(btc, right_index=True, left_index=True, how="left")[
             EMOTIONS[:-1] + ['return', 'close', 'volume']]
         # test_data = test_data.merge(
         #     spx, right_index=True, left_index=True, how="left")

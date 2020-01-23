@@ -17,7 +17,7 @@ def process_df_for_linreg(data):
 
 def process_df_for_xgboost(data):
     data['return'] = data['return'].abs()
-    data['volume'] = data['volume']
+    data['volume'] = data['volume'].diff()
     data['hour'] = data.index.hour
 
     # data['spx_return'] = data['spx_return'].abs()
@@ -64,5 +64,8 @@ def split_dataframe(data, model_type="xgboost", SPLIT_DATE='2018-09-30'):
 
     X_test = test[FEATURES]
     y_test = test[TARGET]
+
+    print("------> mean:", test[TARGET].mean())
+    print(test[TARGET].std(ddof=0))
 
     return X_train, y_train, X_test, y_test
