@@ -216,12 +216,13 @@ def render(emotions, share, dev, btc):
 
     # ======================================== OVERVIEW ========================================
 
-    fig = make_subplots(rows=3, cols=2, shared_xaxes=True, specs=[
+    fig = make_subplots(rows=4, cols=2, shared_xaxes=True, specs=[
         [{"colspan": 2, }, None],
         [{}, {}],
+        [{"colspan": 2, }, None],
         [{"colspan": 2, }, None]
     ], subplot_titles=(
-        'Number of words associated with emotion (per hour)', 'Global boxplot for emotion', 'Total word count per emotion', 'Bitcoin close price'))
+        'Number of words associated with emotion (per hour)', 'Global boxplot for emotion', 'Total word count per emotion', 'Bitcoin close price', 'BTC vs. SPX. daily box plots'))
 
     i = -1
     sums = dict()
@@ -247,12 +248,39 @@ def render(emotions, share, dev, btc):
     fig.add_scatter(x=btc.index, y=btc['close'],  col=1,
                     mode='lines', row=3, name='Bitcoin close price (hourly)')
 
-    fig.update_layout(title_text="Overview")
+    days = ['Monday', 'Tuesday', 'Wednesday',
+            'Thursday', 'Friday', 'Saturday', 'Sunday']
+    by_day = dict()
+    by_day_spx = dict()
+
+    for key, group in btc.groupby([btc.index.weekday_name]):
+        by_day[key] = group
+
+    spx = getSPX()
+    for key, group in spx.groupby([spx.index.weekday_name]):
+        by_day_spx[key] = group
+
+    for day in days:
+        fig.add_trace(go.Box(
+            marker_color='#3D9970',
+            y=by_day[day]['return'].values,
+            name=day,
+            legendgroup='BTC'
+        ), row=4, col=1)
+        if day not in ['Saturday', 'Sunday']:
+            fig.add_trace(go.Box(
+                marker_color='#FF851B',
+                y=by_day_spx[day]['spx_return'].values,
+                name=day,
+                legendgroup='SPX'
+            ), row=4, col=1)
+
+    fig.update_layout(title_text="Overview", boxmode='group', height=1200)
     offline.plot(fig, filename='static/overview.html', auto_open=True)
 
     # ======================================== EMOTIONS ========================================
 
-    fig = make_subplots(rows=9, cols=2, specs=[
+    fig = make_subplots(rows=7, cols=2, specs=[
         [{"colspan": 2, 'rowspan': 2}, None],
         [{}, {}],
         [{}, {}],
@@ -260,8 +288,7 @@ def render(emotions, share, dev, btc):
         [{}, {}],
         [{}, {}],
         [{}, {}],
-        [{"rowspan": 2}, {"rowspan": 2}],
-        [{}, {}]], subplot_titles=(
+    ], subplot_titles=(
         'Share of words containing certain emotion in total word count', '', '', *EMOTIONS[: -1]))
 
     i = -1
@@ -273,7 +300,7 @@ def render(emotions, share, dev, btc):
         fig.add_scatter(x=dev.index, y=dev[em],
                         mode='lines', row=3 + (i % 5), col=(i % 2) + 1, name="Standard dev./" + em, legendgroup=em, line=dict(color=colors[i]))
 
-    fig.update_layout(title_text="Emotion share", height=1000)
+    fig.update_layout(title_text="Emotion share")
     offline.plot(fig, filename='static/emotions.html', auto_open=True)
 
     # ======================================== DISTRIBUTION ========================================
