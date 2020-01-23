@@ -1,6 +1,8 @@
 import fire
+import math
 import datetime
 import pandas as pd
+
 
 from numpy import array
 from pymongo import MongoClient, DESCENDING
@@ -57,7 +59,7 @@ def getTopWords(field="count"):
     params[field] = 1
 
     data = collection.find({}, params, no_cursor_timeout=True).sort(
-        field, DESCENDING).limit(20)
+        field, DESCENDING).limit(10)
     cursor = list(data)
 
     return pd.DataFrame(cursor)
@@ -85,10 +87,55 @@ def calculateStandardDev(dev, df, column):
 
 def render(emotions, share, dev, btc):
 
+    # ======================================== WORD COUNT ========================================
+
+    fig = make_subplots(
+        rows=4, cols=3, subplot_titles=EMOTIONS,  vertical_spacing=0.1)
+
+    for ind, em in enumerate(EMOTIONS):
+        words = getTopWords(em)
+        fig.add_trace(
+            go.Bar(y=words['_id'], x=words[em], name=em, orientation='h'), row=math.floor(ind / 3) + 1, col=ind % 3 + 1)
+
+    fig.update_layout(title_text="Word count by emotion", height=1200, yaxis=dict(
+        dtick=1, autorange="reversed"
+    ),
+        yaxis2=dict(
+        dtick=1, autorange="reversed"
+    ),
+        yaxis3=dict(
+        dtick=1, autorange="reversed"
+    ),
+        yaxis4=dict(
+        dtick=1, autorange="reversed"
+    ),
+        yaxis5=dict(
+        dtick=1, autorange="reversed"
+    ),
+        yaxis6=dict(
+        dtick=1, autorange="reversed"
+    ),
+        yaxis7=dict(
+        dtick=1, autorange="reversed"
+    ),
+        yaxis8=dict(
+        dtick=1, autorange="reversed"
+    ),
+        yaxis9=dict(
+        dtick=1, autorange="reversed"
+    ),
+        yaxis10=dict(
+        dtick=1, autorange="reversed"
+    ),
+        yaxis11=dict(
+        dtick=1, autorange="reversed"
+    ))
+    offline.plot(fig, filename='static/words.html', auto_open=True)
+
     # ======================================== BOXPLOTS (H) ========================================
 
     fig = make_subplots(rows=5, cols=2, subplot_titles=[
-                        x for x in EMOTIONS[:-1]])
+        x for x in EMOTIONS[:-1]])
 
     row = 0
     groups = emotions.groupby([emotions.index.hour])
@@ -108,12 +155,13 @@ def render(emotions, share, dev, btc):
     fig.update_layout(
         title_text="Emotion box plots hourly", showlegend=False, height=1500)
 
-    offline.plot(fig, filename='static/boxplots-hourly.html', auto_open=True)
+    offline.plot(fig, filename='static/boxplots-hourly.html',
+                 auto_open=True)
 
     # ======================================== BOXPLOTS (D) ========================================
 
     fig = make_subplots(rows=5, cols=2, subplot_titles=[
-                        x for x in EMOTIONS[:-1]])
+        x for x in EMOTIONS[:-1]])
 
     row = 0
     days = ['Monday', 'Tuesday', 'Wednesday',
@@ -121,7 +169,7 @@ def render(emotions, share, dev, btc):
     by_day = dict()
     for key, group in emotions.groupby([emotions.index.weekday_name]):
         by_day[key] = group
-    for em in EMOTIONS[:-1]:
+    for em in EMOTIONS[: -1]:
         row = row + 1
         for day in days:
             fig.add_trace(go.Box(
@@ -137,7 +185,8 @@ def render(emotions, share, dev, btc):
     fig.update_layout(
         title_text="Emotion box plots daily", showlegend=False, height=1500)
 
-    offline.plot(fig, filename='static/boxplots-daily.html', auto_open=True)
+    offline.plot(fig, filename='static/boxplots-daily.html',
+                 auto_open=True)
 
     # ======================================== BOXPLOTS (M) ========================================
 
@@ -162,24 +211,41 @@ def render(emotions, share, dev, btc):
     fig.update_layout(
         title_text="Emotion box plots monthly", showlegend=False, height=1500)
 
-    offline.plot(fig, filename='static/boxplots-monthly.html', auto_open=True)
+    offline.plot(fig, filename='static/boxplots-monthly.html',
+                 auto_open=True)
 
     # ======================================== OVERVIEW ========================================
 
-    fig = make_subplots(rows=2,  shared_xaxes=True, subplot_titles=(
-        'Number of words associated with emotion (per hour)', 'Bitcoin close price'))
+    fig = make_subplots(rows=3, cols=2, shared_xaxes=True, specs=[
+        [{"colspan": 2, }, None],
+        [{}, {}],
+        [{"colspan": 2, }, None]
+    ], subplot_titles=(
+        'Number of words associated with emotion (per hour)', 'Global boxplot for emotion', 'Total word count per emotion', 'Bitcoin close price'))
 
     i = -1
+    sums = dict()
+
     for em in EMOTIONS[:-1]:
         i += 1
-        fig.add_scatter(x=emotions.index, y=emotions[em],
+        fig.add_scatter(x=emotions.index, y=emotions[em], legendgroup=em,
                         mode='lines', row=1, col=1, name=em, line=dict(color=colors[i]))
+        fig.add_box(y=emotions[em], legendgroup=em,
+                    row=2, col=1, name="Box/" + em, line=dict(color='#fecb52'))
+
+        sums[em] = emotions[em].sum()
+
+    sums = list(sums.items())
+    sums.sort(key=lambda x: x[1])
+
+    fig.add_trace(go.Bar(y=[i[0] for i in sums], x=[i[1] for i in sums], orientation='h',
+                         name='Total word counts per emotion', marker_color='#636dfa'), row=2, col=2)
 
     btc = btc.merge(emotions[[]], right_index=True,
                     left_index=True, how='right')
 
     fig.add_scatter(x=btc.index, y=btc['close'],  col=1,
-                    mode='lines', row=2, name='Bitcoin close price (hourly)')
+                    mode='lines', row=3, name='Bitcoin close price (hourly)')
 
     fig.update_layout(title_text="Overview")
     offline.plot(fig, filename='static/overview.html', auto_open=True)
@@ -187,10 +253,17 @@ def render(emotions, share, dev, btc):
     # ======================================== EMOTIONS ========================================
 
     fig = make_subplots(rows=9, cols=2, specs=[
-        [{"colspan": 2, 'rowspan': 2}, None], [{}, {}], [{}, {}], [{}, {}], [{}, {}], [{}, {}], [{}, {}], [{"rowspan": 2}, {"rowspan": 2}],  [{}, {}]], subplot_titles=(
-        'Share of words containing certain emotion in total word count', '', '', *EMOTIONS[: -1], "Emotions box plot", "Total word counts per emotion"))
+        [{"colspan": 2, 'rowspan': 2}, None],
+        [{}, {}],
+        [{}, {}],
+        [{}, {}],
+        [{}, {}],
+        [{}, {}],
+        [{}, {}],
+        [{"rowspan": 2}, {"rowspan": 2}],
+        [{}, {}]], subplot_titles=(
+        'Share of words containing certain emotion in total word count', '', '', *EMOTIONS[: -1]))
 
-    sums = dict()
     i = -1
     for em in EMOTIONS[: -1]:
         i += 1
@@ -200,18 +273,7 @@ def render(emotions, share, dev, btc):
         fig.add_scatter(x=dev.index, y=dev[em],
                         mode='lines', row=3 + (i % 5), col=(i % 2) + 1, name="Standard dev./" + em, legendgroup=em, line=dict(color=colors[i]))
 
-        fig.add_box(y=emotions[em],
-                    row=8, col=1, name="Box/" + em, legendgroup=em, line=dict(color='#fecb52'))
-
-        sums[em] = emotions[em].sum()
-
-    sums = list(sums.items())
-    sums.sort(key=lambda x: x[1])
-
-    fig.add_trace(go.Bar(y=[i[0] for i in sums], x=[i[1] for i in sums], orientation='h',
-                         name='Total word counts per emotion', marker_color='#636dfa'), row=8, col=2)
-
-    fig.update_layout(title_text="Emotion share", height=1500)
+    fig.update_layout(title_text="Emotion share", height=1000)
     offline.plot(fig, filename='static/emotions.html', auto_open=True)
 
     # ======================================== DISTRIBUTION ========================================
@@ -235,8 +297,6 @@ def main(plot=None, train=None, serve=False, window=WINDOW_SIZE):
     global WINDOW_SIZE
     WINDOW_SIZE = window  # optional param overrides default
 
-    print(getTopWords())
-    return
     emotions = getEmotionsDataFrame()
     # spx = getSPX()
 
