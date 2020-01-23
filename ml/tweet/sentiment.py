@@ -18,7 +18,6 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 vaderAnalyzer = SentimentIntensityAnalyzer()
 
-__NaiveBayesClassifier = pickle.load(open("naivebayes.pickle", "rb"))
 TweetRepo = get_tweet_repo()
 
 # =============== PROCESSING ===============
@@ -48,13 +47,6 @@ def tokenize_tweet(tweet):
     return [word for word in tokens if word not in __stopwords]
 
 # =============== STRATEGIES ===============
-
-
-def classify_sentiment(text):
-    """
-     Get tweet sentiment using pretrained NB classifier
-    """
-    return __NaiveBayesClassifier.classify(text)
 
 
 def analyze_sentiment(text):

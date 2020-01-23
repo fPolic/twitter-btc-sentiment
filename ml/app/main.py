@@ -3,7 +3,7 @@ import datetime
 import pandas as pd
 
 from numpy import array
-from pymongo import MongoClient
+from pymongo import MongoClient, DESCENDING
 
 from pandas import Grouper
 
@@ -47,6 +47,20 @@ def getEmotionsDataFrame():
     _emotion.index = pd.to_datetime(_emotion.index)
 
     return _emotion[EMOTIONS]
+
+
+def getTopWords(field="count"):
+    collection = DB["word_count"]
+
+    params = dict()
+    params['_id'] = 1
+    params[field] = 1
+
+    data = collection.find({}, params, no_cursor_timeout=True).sort(
+        field, DESCENDING).limit(20)
+    cursor = list(data)
+
+    return pd.DataFrame(cursor)
 
 
 def getSPX():
@@ -96,7 +110,7 @@ def render(emotions, share, dev, btc):
 
     offline.plot(fig, filename='static/boxplots-hourly.html', auto_open=True)
 
-  # ======================================== BOXPLOTS (D) ========================================
+    # ======================================== BOXPLOTS (D) ========================================
 
     fig = make_subplots(rows=5, cols=2, subplot_titles=[
                         x for x in EMOTIONS[:-1]])
@@ -221,6 +235,8 @@ def main(plot=None, train=None, serve=False, window=WINDOW_SIZE):
     global WINDOW_SIZE
     WINDOW_SIZE = window  # optional param overrides default
 
+    print(getTopWords())
+    return
     emotions = getEmotionsDataFrame()
     # spx = getSPX()
 
