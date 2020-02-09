@@ -4,7 +4,7 @@ import csv
 from datetime import datetime
 from pymongo import MongoClient
 
-DIR = './data/quotes'
+DIR = './ml/app/timeseries'
 DATABASE_NAME = 'fer'
 mongoURL = 'mongodb://localhost:27017/'
 
@@ -16,17 +16,16 @@ def load_symbol_data(symbol):
     with open(file_path) as csv_file:
         for line in csv.DictReader(csv_file):
 
-            format = '%m/%d/%Y %H:%M'
-            date = line.get('Date') + ' ' + line.get('Time')
-            parsed_date = datetime.strptime(date, format)
-
+            format = '%Y-%m-%d %H:%M:%S'
+            parsed_date = datetime.strptime(line.get('date'), format)
             series.append({
                 "date": parsed_date,
-                "low": float(line.get("Low")),
-                "open": float(line.get("Open")),
-                "high": float(line.get("High")),
-                "close": float(line.get("Close")),
-                "volume": int(line.get("Vol")),
+                "low": float(line.get("low")),
+                "open": float(line.get("open")),
+                "high": float(line.get("high")),
+                "close": float(line.get("close")),
+                "volume_btc": float(line.get("volume_btc")),
+                "volume_usd": float(line.get("volume_usd") if line.get("volume_usd") else line.get("volume_usdt")),
             })
 
     return series
@@ -36,13 +35,13 @@ def main():
     client = MongoClient(mongoURL)
     db = client[DATABASE_NAME]
 
-    db.spx.drop()
-    db.gld.drop()
-    db.btc.drop()
+    db.binance.drop()
+    db.coinbase.drop()
+    db.bitfinex.drop()
 
-    db.spx.insert_many(load_symbol_data('SPX'))
-    db.gld.insert_many(load_symbol_data('GLD'))
-    db.btc.insert_many(load_symbol_data('BTC-USD'))
+    db.binance.insert_many(load_symbol_data('binance'))
+    db.bitfinex.insert_many(load_symbol_data('bitfinex'))
+    db.coinbase.insert_many(load_symbol_data('coinbase'))
 
 
 if __name__ == "__main__":

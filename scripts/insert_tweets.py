@@ -16,9 +16,15 @@ def get_hastag_list(hashtags):
     '''
       split string into list and remove `#`
     '''
-    if hashtags == None:
+    if hashtags == '' or hashtags == None:
         return []
     return [re.sub(r'#([^\s]+)', r'\1', ht) for ht in hashtags.split(' ')]
+
+
+def get_mentions_list(mentions):
+    if mentions == '' or mentions == '@' or mentions == None:
+        return []
+    return [re.sub(r'@([^\s]+)', r'\1', m) for m in mentions.split(' ')]
 
 
 def main():
@@ -39,6 +45,10 @@ def main():
             file = csv.DictReader(csv_file, delimiter=";")
 
             for line in file:
+                # there are some "empty" tweets in csv files
+                if line.get('text') == 'None':
+                    continue
+
                 try:
                     parsed_date = datetime.datetime.strptime(
                         line.get('date'), '%Y-%m-%d %H:%M:%S')
@@ -46,18 +56,18 @@ def main():
                     parsed_date = datetime.datetime.strptime(
                         line.get('date'), '%Y-%m-%d %H:%M')
 
-                if parsed_date < time_limit:
-                    continue
+                # if parsed_date < time_limit:
+                #     continue
 
                 tweet = {
                     "date": parsed_date,
-                    # "username": line.get('username'),
                     "text": line.get('text'),
+                    "username": line.get('username'),
+                    'retweet': int(line.get('retweets')),
+                    'favorites': int(line.get('favorites')),
                     "tokens":  tokenize_tweet(line.get('text')),
                     "hashtags": get_hastag_list(line.get('hashtags')),
-                    # do we care about this?
-                    # we can eliminate duplicate tweets with Mongo index
-                    # 'retweet': int(line.get('retweets'))
+                    'mentions': get_mentions_list(line.get('mentions'))
                 }
 
                 insert_data.append(tweet)
